@@ -102,7 +102,7 @@ private fun Llama() {
             contentDescription = null,
             modifier = Modifier.size(22.dp),
         )
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(6.dp))
         TextMMD(text = "Feed the llamas", fontSize = 14.sp)
     }
 }
