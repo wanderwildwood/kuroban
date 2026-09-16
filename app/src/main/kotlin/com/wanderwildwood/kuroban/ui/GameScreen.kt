@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -181,7 +180,7 @@ fun GameScreen(
     val result = state.result
     if (result != null && !resultDismissed && !menuOpen) {
         EInkDialog(onDismiss = { resultDismissed = true }) {
-            TextMMD(text = result, fontSize = 20.sp, fontWeight = FontWeight.Medium)
+            TextMMD(text = result, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             if (state.wasScored) {
                 TextMMD(
@@ -195,7 +194,7 @@ fun GameScreen(
                             append(" Stones marked × were counted as dead.")
                         }
                     },
-                    fontSize = 15.sp,
+                    style = MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(18.dp))
             } else {
@@ -206,14 +205,14 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "New game", fontSize = 15.sp) }
+            ) { TextMMD(text = "New game", style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             OutlinedButtonMMD(
                 onClick = { resultDismissed = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "Look at board", fontSize = 15.sp) }
+            ) { TextMMD(text = "Look at board", style = MaterialTheme.typography.bodySmall) }
         }
     }
 
@@ -223,11 +222,11 @@ fun GameScreen(
     // makes it happen again, was the part that got cut off.
     if (state.phase == Phase.BROKEN && !breakageDismissed && !menuOpen) {
         EInkDialog(onDismiss = { breakageDismissed = true }) {
-            TextMMD(text = "The game stopped", fontSize = 20.sp, fontWeight = FontWeight.Medium)
+            TextMMD(text = "The game stopped", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             TextMMD(
                 text = state.message ?: "The engine stopped answering.",
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(18.dp))
             ButtonMMD(
@@ -235,14 +234,14 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "New game", fontSize = 15.sp) }
+            ) { TextMMD(text = "New game", style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             OutlinedButtonMMD(
                 onClick = { breakageDismissed = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "Look at board", fontSize = 15.sp) }
+            ) { TextMMD(text = "Look at board", style = MaterialTheme.typography.bodySmall) }
         }
     }
 }
@@ -275,7 +274,7 @@ private fun StatusTitle(state: GameState, onPress: (() -> Unit)? = null) {
         }
         TextMMD(
             text = state.message ?: state.statusText(),
-            fontSize = 18.sp,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
         )
@@ -288,11 +287,11 @@ private fun RowScope.Captures(state: GameState) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         StoneGlyph(stone = Stone.BLACK, size = 12.dp)
         Spacer(Modifier.width(5.dp))
-        TextMMD(text = "${state.blackCaptures}", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        TextMMD(text = "${state.blackCaptures}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(12.dp))
         StoneGlyph(stone = Stone.WHITE, size = 12.dp)
         Spacer(Modifier.width(5.dp))
-        TextMMD(text = "${state.whiteCaptures}", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        TextMMD(text = "${state.whiteCaptures}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -346,7 +345,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Undo", fontSize = 14.sp, maxLines = 1) }
+        ) { TextMMD(text = "Undo", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         OutlinedButtonMMD(
             onClick = onPass,
@@ -355,7 +354,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Pass", fontSize = 14.sp, maxLines = 1) }
+        ) { TextMMD(text = "Pass", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         OutlinedButtonMMD(
             onClick = onHint,
@@ -364,7 +363,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Hint", fontSize = 14.sp, maxLines = 1) }
+        ) { TextMMD(text = "Hint", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         if (state.preview != null) {
             ButtonMMD(
@@ -373,7 +372,7 @@ private fun BottomBar(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-            ) { TextMMD(text = "Place", fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1) }
+            ) { TextMMD(text = "Place", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
         } else {
             OutlinedButtonMMD(
                 onClick = {},
@@ -382,7 +381,7 @@ private fun BottomBar(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-            ) { TextMMD(text = "Place", fontSize = 14.sp, maxLines = 1) }
+            ) { TextMMD(text = "Place", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
         }
     }
 }
@@ -413,7 +412,7 @@ private fun SetupBar(
     ) {
         for ((label, stone) in listOf("Black" to Stone.BLACK, "White" to Stone.WHITE, "Erase" to null)) {
             val content: @Composable () -> Unit = {
-                TextMMD(text = label, fontSize = 14.sp, maxLines = 1)
+                TextMMD(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
             if (placing == stone) {
                 ButtonMMD(
@@ -440,7 +439,7 @@ private fun SetupBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Play", fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1) }
+        ) { TextMMD(text = "Play", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
     }
 }
 
@@ -467,14 +466,14 @@ private fun MenuDialog(
     onDismiss: () -> Unit,
 ) {
     EInkDialog(onDismiss = onDismiss) {
-        TextMMD(text = "Menu", fontSize = 20.sp, fontWeight = FontWeight.Medium)
+        TextMMD(text = "Menu", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(18.dp))
         ButtonMMD(
             onClick = onDismiss,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-        ) { TextMMD(text = if (settingUp) "Back to the board" else "Back to game", fontSize = 15.sp) }
+        ) { TextMMD(text = if (settingUp) "Back to the board" else "Back to game", style = MaterialTheme.typography.bodySmall) }
         Spacer(Modifier.height(10.dp))
         ConfirmingButton(
             label = "New game",
@@ -526,7 +525,7 @@ private fun ConfirmingButton(
     ) {
         TextMMD(
             text = if (armed) armedLabel else label,
-            fontSize = 15.sp,
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = if (armed) FontWeight.Medium else FontWeight.Normal,
             maxLines = 1,
         )

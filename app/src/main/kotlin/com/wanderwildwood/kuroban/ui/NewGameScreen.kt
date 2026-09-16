@@ -27,7 +27,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -56,7 +55,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBarMMD(
-                title = { TextMMD(text = "Go", fontSize = 24.sp, fontWeight = FontWeight.Medium) },
+                title = { TextMMD(text = "Go") },
                 actions = { InfoButton(onClick = { aboutOpen = true }) },
             )
         },
@@ -113,7 +112,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                 } else {
                     "Black starts with $handicap stones on the board, and White plays first."
                 },
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.labelSmall,
             )
 
             // The empty middle of this screen was doing nothing; a corner of a board fills
@@ -156,7 +155,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                         .weight(1f)
                         .height(54.dp),
                 ) {
-                    TextMMD(text = "Set up", fontSize = 18.sp, maxLines = 1)
+                    TextMMD(text = "Set up", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                 }
                 ButtonMMD(
                     onClick = {
@@ -173,7 +172,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                         .weight(1f)
                         .height(54.dp),
                 ) {
-                    TextMMD(text = "Play", fontSize = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                    TextMMD(text = "Play", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
                 }
             }
         }
@@ -257,13 +256,13 @@ private fun <T> ChoiceRow(
     onSelect: (T) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        TextMMD(text = label, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        TextMMD(text = label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             for (option in options) {
                 val isSelected = option == selected
                 val content: @Composable () -> Unit = {
-                    TextMMD(text = optionLabel(option), fontSize = 15.sp, maxLines = 1)
+                    TextMMD(text = optionLabel(option), style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 }
                 if (isSelected) {
                     ButtonMMD(
