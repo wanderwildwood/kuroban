@@ -12,6 +12,7 @@ import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.wanderwildwood.kuroban.BuildConfig
 import android.content.Intent
+import android.widget.Toast
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -89,10 +90,17 @@ private fun Llama() {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                // Straight to the checkout. The Donate button on the site only leads
+                // here anyway, so the page in between is a press the reader does not need.
+                // The short square.link form, not the long checkout.square.site address it
+                // redirects to -- the short one is what the site itself links to, so a
+                // regenerated checkout follows it and a published app does not break.
                 runCatching {
                     context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://hotspringsllamas.org/donate/")),
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://square.link/u/AGu8oT10")),
                     )
+                }.onFailure {
+                    Toast.makeText(context, "There is no browser on this phone to open that with.", Toast.LENGTH_SHORT).show()
                 }
             }
             .padding(vertical = 4.dp),
