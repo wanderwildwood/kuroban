@@ -11,12 +11,13 @@ import com.mudita.mmd.ThemeMMD
 import com.wanderwildwood.kuroban.game.GameViewModel
 import com.wanderwildwood.kuroban.ui.GameScreen
 import com.wanderwildwood.kuroban.ui.NewGameScreen
+import com.wanderwildwood.kuroban.ui.monochrome
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ThemeMMD {
+            ThemeMMD(colorScheme = monochrome) {
                 Kuroban()
             }
         }

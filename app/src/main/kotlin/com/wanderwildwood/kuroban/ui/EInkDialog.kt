@@ -18,12 +18,19 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 
 /**
- * A dialog with no dimmed backdrop.
+ * A dialog with no dimmed backdrop. The same file in every app of this shop.
  *
  * The stock scrim is a translucent black over the whole window, which on E Ink is not a
- * shadow but a screenful of dithered grey - it repaints everything and makes the board
- * behind it muddy. A plain white panel with a black rim reads far better and costs one
- * partial refresh instead of a full one.
+ * shadow but a screenful of dithered grey — it repaints everything behind the dialog and
+ * leaves it muddy on the way out. A plain white panel with a black rim reads far better and
+ * costs one partial refresh instead of a full one.
+ *
+ * Material's own `AlertDialog` is wrong here twice over: it animates in, and it sizes itself
+ * to its buttons, so a dialog asking a short question and a dialog asking a long one read as
+ * two different dialogs. This one is always the same width.
+ *
+ * MMD has no dialog of its own, which is why this is house rather than library. Everything
+ * inside it should still be MMD — `TextMMD` for the words, `OutlinedButtonMMD` for a press.
  */
 @Composable
 fun EInkDialog(
