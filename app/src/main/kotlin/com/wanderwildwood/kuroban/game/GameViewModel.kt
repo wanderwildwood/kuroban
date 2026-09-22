@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wanderwildwood.kuroban.R
+import com.wanderwildwood.kuroban.engine.EngineFailure
 import com.wanderwildwood.kuroban.engine.EngineMove
 import com.wanderwildwood.kuroban.engine.GnuGo
+import com.wanderwildwood.kuroban.engine.GnuGoException
 import com.wanderwildwood.kuroban.engine.writePosition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -431,7 +433,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 phase = Phase.FINISHED,
                 preview = null,
                 legal = emptySet(),
-                result = formatResult(score = "", resignedBy = current.toMove),
+                result = outcome(score = "", resignedBy = current.toMove),
                 wasScored = false,
             )
         }
@@ -509,7 +511,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                         phase = Phase.FINISHED,
                         preview = null,
                         legal = emptySet(),
-                        result = formatResult(score = "", resignedBy = toMove),
+                        result = outcome(score = "", resignedBy = toMove),
                         wasScored = false,
                     )
                 }
@@ -540,7 +542,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         sync(counter, Phase.FINISHED)
         _state.update {
             it?.copy(
-                result = formatResult(counted.score),
+                result = outcome(counted.score),
                 dead = counted.dead,
                 // Two passes and a count is the only way here; resigning and taking a
                 // finished game back both clear this. Without it the dialog never showed
@@ -626,8 +628,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 phase = Phase.BROKEN,
                 legal = emptySet(),
                 preview = null,
-                message = cause.message ?: getApplication<Application>().getString(R.string.game_message_engine_stopped),
+                message = said((cause as? GnuGoException)?.failure)
+                    ?: cause.message
+                    ?: getApplication<Application>().getString(R.string.game_message_engine_stopped),
             )
+        }
+    }
+
+    /**
+     * The engine failures meant for the player, in their words. The GTP command and the
+     * engine's answer go into the sentence as they are: they are the engine's words, and
+     * they are what anybody looking into the failure will search for.
+     */
+    private fun said(failure: EngineFailure?): String? {
+        val app = getApplication<Application>()
+        return when (failure) {
+            null -> null
+            EngineFailure.NotRunning -> app.getString(R.string.engine_not_running)
+            is EngineFailure.Bug -> app.getString(R.string.engine_bug, failure.seed.toString())
+            is EngineFailure.Stopped -> app.getString(R.string.engine_stopped_during, failure.command)
+            is EngineFailure.NotAMove -> app.getString(R.string.engine_not_a_move, failure.answer)
         }
     }
 

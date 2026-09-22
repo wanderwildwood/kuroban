@@ -9,7 +9,28 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.IOException
 
-class GnuGoException(message: String) : Exception(message)
+/**
+ * [failure] is set when there is something to tell the player, and the screen words it
+ * from resources. Without one, [message] is engine detail - a GTP command and what came
+ * back - and is shown as it is, since there is nothing in it to translate.
+ */
+class GnuGoException(message: String, val failure: EngineFailure? = null) : Exception(message) {
+    constructor(failure: EngineFailure) : this(failure.toString(), failure)
+}
+
+/** The ways the engine can fail that are worth a sentence to the player. */
+sealed interface EngineFailure {
+    data object NotRunning : EngineFailure
+
+    /** GNU Go hit an assertion of its own. [seed] replays the game that found it. */
+    data class Bug(val seed: Int) : EngineFailure
+
+    /** Stopped answering, part way through [command]. */
+    data class Stopped(val command: String) : EngineFailure
+
+    /** Answered a move request with [answer], which is not a point, a pass or a resignation. */
+    data class NotAMove(val answer: String) : EngineFailure
+}
 
 /** What came back from asking the engine for a move. */
 sealed interface EngineMove {
@@ -107,8 +128,8 @@ class GnuGo(private val binaryPath: String) {
      */
     @Synchronized
     fun send(command: String): String {
-        val out = writer ?: throw GnuGoException("Engine is not running")
-        val input = reader ?: throw GnuGoException("Engine is not running")
+        val out = writer ?: throw GnuGoException(EngineFailure.NotRunning)
+        val input = reader ?: throw GnuGoException(EngineFailure.NotRunning)
 
         synchronized(diagnosticsLock) {
             conversation.addLast(command)
@@ -125,7 +146,7 @@ class GnuGo(private val binaryPath: String) {
 
         val lines = mutableListOf<String>()
         while (true) {
-            val line = input.readLine() ?: throw GnuGoException(deathMessage(command))
+            val line = input.readLine() ?: throw GnuGoException(death(command))
             if (line.isBlank()) {
                 if (lines.isEmpty()) continue else break
             }
@@ -141,13 +162,13 @@ class GnuGo(private val binaryPath: String) {
     }
 
     /**
-     * What to say about an engine that stopped answering, having first asked it why.
+     * What went wrong with an engine that stopped answering, having first asked it why.
      *
      * Everything it said goes to the log, where `adb logcat` can reach it. The phone
      * itself gets the one line that makes the failure repeatable: the seed, which replays
      * the same game move for move.
      */
-    private fun deathMessage(command: String): String {
+    private fun death(command: String): EngineFailure {
         // stderr is a separate pipe drained by a separate thread, so it is routinely a
         // line or two behind stdout closing. Its last words are the point of this path.
         stderrDrain?.join(DRAIN_GRACE_MS)
@@ -165,9 +186,9 @@ class GnuGo(private val binaryPath: String) {
         // The seed is ours, not the one GNU Go prints beside its bug report - that one
         // comes back 0 in GTP mode and is no use to anybody trying to play the game again.
         return if (said.any { it.contains(BUG_REPORT) }) {
-            "The engine hit a bug in itself. Game $seed."
+            EngineFailure.Bug(seed)
         } else {
-            "The engine stopped during '$command'"
+            EngineFailure.Stopped(command)
         }
     }
 
@@ -209,7 +230,7 @@ class GnuGo(private val binaryPath: String) {
             // own diagnostics down the same pipe its moves come along, and reading that
             // as a pass would quietly hand the game over instead of saying what happened.
             else -> parseVertex(answer)?.let(EngineMove::Play)
-                ?: throw GnuGoException("The engine answered '$answer', which is not a move")
+                ?: throw GnuGoException(EngineFailure.NotAMove(answer))
         }
     }
 

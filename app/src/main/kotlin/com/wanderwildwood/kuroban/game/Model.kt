@@ -59,9 +59,9 @@ enum class Opponent { COMPUTER, HUMAN }
  * So the ladder stops at 5, and handicap is the dial for anything finer. That is the
  * Go-native answer anyway: handicap is how the game has always handled unequal players.
  */
-enum class Difficulty(val level: Int, val label: String) {
-    EASY(1, "Easy"),
-    NORMAL(5, "Normal"),
+enum class Difficulty(val level: Int) {
+    EASY(1),
+    NORMAL(5),
 }
 
 /**
@@ -130,7 +130,7 @@ data class GameState(
     /** Tapped but not yet committed. */
     val preview: Point? = null,
     val dead: Set<Point> = emptySet(),
-    val result: String? = null,
+    val result: Outcome? = null,
     /** True only when the game ended in two passes and the engine counted it. */
     val wasScored: Boolean = false,
     val movesPlayed: Int = 0,
@@ -152,24 +152,36 @@ data class GameState(
         get() = if (config.opponent == Opponent.COMPUTER) 2 else 1
 }
 
-/** `B+7.5` and `W+12.5` and `0`, said the way a person would say them. */
-fun formatResult(score: String, resignedBy: Stone? = null): String {
-    if (resignedBy != null) {
-        val winner = if (resignedBy == Stone.BLACK) "White" else "Black"
-        return "$winner wins by resignation"
-    }
+/** How a game ended, as the game-over dialog says it. The screen puts the words to it. */
+sealed interface Outcome {
+    data class Resignation(val winner: Stone) : Outcome
+    data object Draw : Outcome
+
+    /** A win with no margin given. */
+    data class Win(val winner: Stone) : Outcome
+
+    /** [margin] is the engine's own number, e.g. `7.5`, passed on as it was written. */
+    data class WinBy(val winner: Stone, val margin: String) : Outcome
+
+    /** A score this does not understand, to be shown as it is rather than guessed at. */
+    data class Unrecognised(val score: String) : Outcome
+}
+
+/** What `B+7.5` and `W+12.5` and `0` mean, or a resignation, which ignores the score. */
+fun outcome(score: String, resignedBy: Stone? = null): Outcome {
+    if (resignedBy != null) return Outcome.Resignation(resignedBy.other)
     val trimmed = score.trim()
-    if (trimmed.isEmpty() || trimmed == "0") return "A draw"
+    if (trimmed.isEmpty() || trimmed == "0") return Outcome.Draw
     val winner = when (trimmed.first().uppercaseChar()) {
-        'B' -> "Black"
-        'W' -> "White"
-        else -> return trimmed
+        'B' -> Stone.BLACK
+        'W' -> Stone.WHITE
+        else -> return Outcome.Unrecognised(trimmed)
     }
     val margin = trimmed.substringAfter('+', "").trim()
     return when {
-        margin.isEmpty() -> "$winner wins"
+        margin.isEmpty() -> Outcome.Win(winner)
         // Scores are normally a number, but "+R" is a resignation written as a score.
-        margin.equals("R", ignoreCase = true) -> "$winner wins by resignation"
-        else -> "$winner wins by $margin"
+        margin.equals("R", ignoreCase = true) -> Outcome.Resignation(winner)
+        else -> Outcome.WinBy(winner, margin)
     }
 }

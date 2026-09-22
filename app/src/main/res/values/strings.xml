@@ -64,6 +64,18 @@
     <!-- Start playing from the position set up (verb) -->
     <string name="setup_play">Play</string>
 
+    <!-- Game over dialog: the result, also shown in the top bar once the game is over.
+         One sentence per colour, so the rest of it can agree with the colour -->
+    <string name="result_black_resigned">Black wins by resignation</string>
+    <string name="result_white_resigned">White wins by resignation</string>
+    <!-- A win the engine gave no margin for -->
+    <string name="result_black_wins">Black wins</string>
+    <string name="result_white_wins">White wins</string>
+    <!-- %1$s is the margin in points, as the engine wrote it, e.g. 7.5 -->
+    <string name="result_black_wins_by">Black wins by %1$s</string>
+    <string name="result_white_wins_by">White wins by %1$s</string>
+    <string name="result_draw">A draw</string>
+
     <!-- Game over dialog. %1$s is the komi, e.g. 7.5 -->
     <string name="game_result_scored">Scored with komi %1$s.</string>
     <!-- %1$s is the komi, %2$d the handicap (2 to 5) -->
@@ -76,6 +88,16 @@
     <!-- The dialog when the engine dies -->
     <string name="game_stopped_title">The game stopped</string>
     <string name="game_stopped_default">The engine stopped answering.</string>
+    <!-- Its reason, when there is one. "The engine" is GNU Go, the program playing
+         the other side and keeping the rules -->
+    <string name="engine_not_running">Engine is not running</string>
+    <!-- %1$s is a game number, which replays the same game; keep it as it is -->
+    <string name="engine_bug">The engine hit a bug in itself. Game %1$s.</string>
+    <!-- %1$s is the command the engine was given, in the engine's own language (GTP),
+         e.g. genmove black. Leave it untranslated, quotes included -->
+    <string name="engine_stopped_during">The engine stopped during \'%1$s\'</string>
+    <!-- %1$s is what the engine answered instead of a move, as it wrote it -->
+    <string name="engine_not_a_move">The engine answered \'%1$s\', which is not a move</string>
 
     <!-- ============================================================ -->
     <!-- The menu the back button opens -->

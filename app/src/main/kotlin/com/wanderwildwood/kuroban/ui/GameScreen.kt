@@ -36,6 +36,7 @@ import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 import com.wanderwildwood.kuroban.R
 import com.wanderwildwood.kuroban.game.GameState
+import com.wanderwildwood.kuroban.game.Outcome
 import com.wanderwildwood.kuroban.game.Phase
 import com.wanderwildwood.kuroban.game.Point
 import com.wanderwildwood.kuroban.game.Stone
@@ -185,7 +186,7 @@ fun GameScreen(
         val scoredKomiHandicap = stringResource(R.string.game_result_scored_handicap, state.config.komi, state.config.handicap)
         val deadMarked = stringResource(R.string.game_result_dead_marked)
         EInkDialog(onDismiss = { resultDismissed = true }) {
-            TextMMD(text = result, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            TextMMD(text = said(result), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             if (state.wasScored) {
                 TextMMD(
@@ -541,6 +542,29 @@ private fun GameState.statusText(): String = when (phase) {
     Phase.SETUP -> stringResource(R.string.status_plays_first)
     Phase.THINKING -> stringResource(R.string.status_thinking)
     Phase.BROKEN -> stringResource(R.string.status_engine_stopped)
-    Phase.FINISHED -> result ?: stringResource(R.string.status_game_over)
+    Phase.FINISHED -> result?.let { said(it) } ?: stringResource(R.string.status_game_over)
     Phase.PLAYING -> stringResource(R.string.status_your_move)
+}
+
+/**
+ * How a game ended, in a sentence. A whole sentence for each colour, rather than the
+ * colour dropped into one, because in plenty of languages the rest of the sentence
+ * changes to agree with it.
+ */
+@Composable
+private fun said(outcome: Outcome): String = when (outcome) {
+    is Outcome.Resignation -> when (outcome.winner) {
+        Stone.BLACK -> stringResource(R.string.result_black_resigned)
+        Stone.WHITE -> stringResource(R.string.result_white_resigned)
+    }
+    Outcome.Draw -> stringResource(R.string.result_draw)
+    is Outcome.Win -> when (outcome.winner) {
+        Stone.BLACK -> stringResource(R.string.result_black_wins)
+        Stone.WHITE -> stringResource(R.string.result_white_wins)
+    }
+    is Outcome.WinBy -> when (outcome.winner) {
+        Stone.BLACK -> stringResource(R.string.result_black_wins_by, outcome.margin)
+        Stone.WHITE -> stringResource(R.string.result_white_wins_by, outcome.margin)
+    }
+    is Outcome.Unrecognised -> outcome.score
 }
