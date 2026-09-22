@@ -1,4 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Also the title in the top bar of the new-game screen -->
     <string name="app_name">Go</string>
+
+    <!-- ============================================================ -->
+    <!-- Stone colours, used on the new-game screen and the setup bar -->
+    <string name="stone_black">Black</string>
+    <string name="stone_white">White</string>
+
+    <!-- ============================================================ -->
+    <!-- New game screen -->
+
+    <!-- Row heading: who you play against -->
+    <string name="new_game_opponent">Opponent</string>
+    <!-- The computer opponent, named for the engine it is. A proper name, usually left untranslated -->
+    <string name="new_game_opponent_gnugo">GNU Go</string>
+    <string name="new_game_opponent_two_players">2 players</string>
+    <string name="new_game_difficulty">Difficulty</string>
+    <string name="new_game_difficulty_easy">Easy</string>
+    <string name="new_game_difficulty_normal">Normal</string>
+    <!-- Row heading: which colour you play -->
+    <string name="new_game_your_stones">Your stones</string>
+    <!-- Row heading: free stones for Black before play starts (Go term) -->
+    <string name="new_game_handicap">Handicap</string>
+    <string name="new_game_black_first">Black plays first.</string>
+    <!-- %1$d is the handicap, always 2 to 5 -->
+    <string name="new_game_handicap_explained">Black starts with %1$d stones on the board, and White plays first.</string>
+    <!-- Button: place stones by hand before starting (verb) -->
+    <string name="new_game_set_up">Set up</string>
+    <!-- Button: start the game (verb) -->
+    <string name="new_game_play">Play</string>
+
+    <!-- ============================================================ -->
+    <!-- Game screen: the status in the top bar -->
+
+    <string name="status_starting">Starting…</string>
+    <!-- Shown beside a stone while setting up a position: "[stone] plays first". Lower case on purpose -->
+    <string name="status_plays_first">plays first</string>
+    <string name="status_thinking">Thinking…</string>
+    <string name="status_engine_stopped">Engine stopped</string>
+    <string name="status_game_over">Game over</string>
+    <string name="status_your_move">Your move</string>
+
+    <!-- Game screen: one-line messages in the same slot -->
+    <string name="game_message_no_liberties">That leaves no liberties</string>
+    <!-- "Pass" as the Go move: you gave up your turn -->
+    <string name="game_message_you_passed">You passed</string>
+    <string name="game_message_nothing_to_suggest">Nothing worth suggesting</string>
+    <string name="game_message_gnugo_passed">GNU Go passed</string>
+    <string name="game_message_engine_stopped">The engine stopped</string>
+
+    <!-- Game screen: the buttons under the board -->
+    <string name="game_undo">Undo</string>
+    <!-- The Go move: give up your turn (verb) -->
+    <string name="game_pass">Pass</string>
+    <string name="game_hint">Hint</string>
+    <!-- Put the previewed stone down (verb) -->
+    <string name="game_place">Place</string>
+
+    <!-- Setup bar: what a tap on the board puts down, and the way out -->
+    <!-- Take a stone off the board (verb) -->
+    <string name="setup_erase">Erase</string>
+    <!-- Start playing from the position set up (verb) -->
+    <string name="setup_play">Play</string>
+
+    <!-- Game over dialog. %1$s is the komi, e.g. 7.5 -->
+    <string name="game_result_scored">Scored with komi %1$s.</string>
+    <!-- %1$s is the komi, %2$d the handicap (2 to 5) -->
+    <string name="game_result_scored_handicap">Scored with komi %1$s and %2$d handicap stones.</string>
+    <string name="game_result_dead_marked">Stones marked × were counted as dead.</string>
+    <string name="game_new_game">New game</string>
+    <!-- Close the dialog to look at the final board -->
+    <string name="game_look_at_board">Look at board</string>
+
+    <!-- The dialog when the engine dies -->
+    <string name="game_stopped_title">The game stopped</string>
+    <string name="game_stopped_default">The engine stopped answering.</string>
+
+    <!-- ============================================================ -->
+    <!-- The menu the back button opens -->
+    <string name="menu_title">Menu</string>
+    <string name="menu_back_to_board">Back to the board</string>
+    <string name="menu_back_to_game">Back to game</string>
+    <!-- The New game button after one tap, asking for a second; keep it short, one line -->
+    <string name="menu_throw_away_position_armed">Throw away this position — tap again</string>
+    <string name="menu_give_up_game_armed">Give up this game — tap again</string>
+    <string name="menu_resign">Resign</string>
+    <string name="menu_resign_armed">Resign — tap again</string>
+
+    <!-- ============================================================ -->
+    <!-- About dialog -->
+
+    <!-- %1$s is the version number -->
+    <string name="about_version">Go %1$s</string>
+    <string name="about_licence">GNU General Public License v3</string>
+    <string name="about_gnugo">GNU Go 3.8 — © 1999–2009 Free Software Foundation, unmodified, same licence</string>
+    <!-- The book's archive.org address is shown on the line after this one -->
+    <string name="about_little_lions">New to the 9x9 board? ‘81 Little Lions’ by Immanuel deVillers:</string>
+    <string name="about_close">Close</string>
+    <!-- Opens the donation page -->
+    <string name="about_feed_llamas">Feed the llamas</string>
+    <string name="about_no_browser">There is no browser on this phone to open that with.</string>
 </resources>

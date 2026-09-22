@@ -3,6 +3,7 @@ package com.wanderwildwood.kuroban.game
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.wanderwildwood.kuroban.R
 import com.wanderwildwood.kuroban.engine.EngineMove
 import com.wanderwildwood.kuroban.engine.GnuGo
 import com.wanderwildwood.kuroban.engine.writePosition
@@ -253,7 +254,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     loadSetup(active)
                     // The bar holds about this much at the size it is set in, and the
                     // sentence is cut rather than wrapped when it does not fit.
-                    _state.update { it?.copy(message = "That leaves no liberties") }
+                    _state.update { it?.copy(message = getApplication<Application>().getString(R.string.game_message_no_liberties)) }
                 } else {
                     setupBlack = black
                     setupWhite = white
@@ -382,7 +383,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (consecutivePasses >= 2) {
                     finish(active)
                 } else {
-                    continueAfterHumanMove(active, current.config, message = "You passed")
+                    continueAfterHumanMove(active, current.config, message = getApplication<Application>().getString(R.string.game_message_you_passed))
                 }
             } catch (e: Exception) {
                 broken(e)
@@ -409,7 +410,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update {
                     it?.copy(
                         preview = suggestion,
-                        message = if (suggestion == null) "Nothing worth suggesting" else null,
+                        message = if (suggestion == null) getApplication<Application>().getString(R.string.game_message_nothing_to_suggest) else null,
                     )
                 }
             } catch (e: Exception) {
@@ -497,7 +498,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (consecutivePasses >= 2) {
                     finish(active)
                 } else {
-                    sync(active, Phase.PLAYING, message = "GNU Go passed")
+                    sync(active, Phase.PLAYING, message = getApplication<Application>().getString(R.string.game_message_gnugo_passed))
                 }
             }
 
@@ -625,7 +626,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 phase = Phase.BROKEN,
                 legal = emptySet(),
                 preview = null,
-                message = cause.message ?: "The engine stopped",
+                message = cause.message ?: getApplication<Application>().getString(R.string.game_message_engine_stopped),
             )
         }
     }

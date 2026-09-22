@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.wanderwildwood.kuroban.R
 
 /**
@@ -36,16 +37,15 @@ import com.wanderwildwood.kuroban.R
 fun AboutDialog(onDismiss: () -> Unit) {
     EInkDialog(onDismiss = onDismiss) {
         TextMMD(
-            text = "Go ${BuildConfig.VERSION_NAME}",
+            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
 
         Spacer(Modifier.height(14.dp))
-        TextMMD(text = "GNU General Public License v3", style = MaterialTheme.typography.labelSmall)
+        TextMMD(text = stringResource(R.string.about_licence), style = MaterialTheme.typography.labelSmall)
         TextMMD(
-            text = "GNU Go 3.8 \u2014 \u00a9 1999\u20132009 Free Software Foundation, " +
-                "unmodified, same licence",
+            text = stringResource(R.string.about_gnugo),
             style = MaterialTheme.typography.labelSmall,
         )
 
@@ -54,7 +54,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
 
         Spacer(Modifier.height(14.dp))
         TextMMD(
-            text = "New to the 9x9 board? \u201881 Little Lions\u2019 by Immanuel deVillers:",
+            text = stringResource(R.string.about_little_lions),
             style = MaterialTheme.typography.labelSmall,
         )
         TextMMD(text = "archive.org/details/81LittleLions", style = MaterialTheme.typography.labelSmall)
@@ -68,7 +68,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-        ) { TextMMD(text = "Close", style = MaterialTheme.typography.bodySmall) }
+        ) { TextMMD(text = stringResource(R.string.about_close), style = MaterialTheme.typography.bodySmall) }
     }
 }
 
@@ -100,7 +100,7 @@ private fun Llama() {
                         Intent(Intent.ACTION_VIEW, Uri.parse("https://square.link/u/AGu8oT10")),
                     )
                 }.onFailure {
-                    Toast.makeText(context, "There is no browser on this phone to open that with.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
                 }
             }
             .padding(vertical = 4.dp),
@@ -111,6 +111,6 @@ private fun Llama() {
             modifier = Modifier.size(22.dp),
         )
         Spacer(Modifier.width(6.dp))
-        TextMMD(text = "Feed the llamas", style = MaterialTheme.typography.labelSmall)
+        TextMMD(text = stringResource(R.string.about_feed_llamas), style = MaterialTheme.typography.labelSmall)
     }
 }

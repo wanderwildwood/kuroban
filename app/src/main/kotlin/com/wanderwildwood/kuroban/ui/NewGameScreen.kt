@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
+import com.wanderwildwood.kuroban.R
 import com.wanderwildwood.kuroban.game.Difficulty
 import com.wanderwildwood.kuroban.game.GameConfig
 import com.wanderwildwood.kuroban.game.Opponent
@@ -50,12 +52,18 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
     var humanColor by remember { mutableStateOf(Stone.BLACK) }
     var handicap by remember { mutableStateOf(0) }
     var aboutOpen by remember { mutableStateOf(false) }
+    val gnuGoLabel = stringResource(R.string.new_game_opponent_gnugo)
+    val twoPlayersLabel = stringResource(R.string.new_game_opponent_two_players)
+    val easyLabel = stringResource(R.string.new_game_difficulty_easy)
+    val normalLabel = stringResource(R.string.new_game_difficulty_normal)
+    val blackLabel = stringResource(R.string.stone_black)
+    val whiteLabel = stringResource(R.string.stone_white)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBarMMD(
-                title = { TextMMD(text = "Go") },
+                title = { TextMMD(text = stringResource(R.string.app_name)) },
                 actions = { InfoButton(onClick = { aboutOpen = true }) },
             )
         },
@@ -67,39 +75,44 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
             ChoiceRow(
-                label = "Opponent",
+                label = stringResource(R.string.new_game_opponent),
                 options = listOf(Opponent.COMPUTER, Opponent.HUMAN),
                 selected = opponent,
                 // Named, not "Computer". It is a particular engine with a particular
                 // way of playing, it is the reason this app can count a finished game,
                 // and its name is the honest answer to "what am I playing against?".
-                optionLabel = { if (it == Opponent.COMPUTER) "GNU Go" else "2 players" },
+                optionLabel = { if (it == Opponent.COMPUTER) gnuGoLabel else twoPlayersLabel },
                 onSelect = { opponent = it },
             )
 
             if (opponent == Opponent.COMPUTER) {
                 Spacer(Modifier.height(22.dp))
                 ChoiceRow(
-                    label = "Difficulty",
+                    label = stringResource(R.string.new_game_difficulty),
                     options = Difficulty.entries.toList(),
                     selected = difficulty,
-                    optionLabel = { it.label },
+                    optionLabel = {
+                        when (it) {
+                            Difficulty.EASY -> easyLabel
+                            Difficulty.NORMAL -> normalLabel
+                        }
+                    },
                     onSelect = { difficulty = it },
                 )
 
                 Spacer(Modifier.height(22.dp))
                 ChoiceRow(
-                    label = "Your stones",
+                    label = stringResource(R.string.new_game_your_stones),
                     options = listOf(Stone.BLACK, Stone.WHITE),
                     selected = humanColor,
-                    optionLabel = { if (it == Stone.BLACK) "Black" else "White" },
+                    optionLabel = { if (it == Stone.BLACK) blackLabel else whiteLabel },
                     onSelect = { humanColor = it },
                 )
             }
 
             Spacer(Modifier.height(22.dp))
             ChoiceRow(
-                label = "Handicap",
+                label = stringResource(R.string.new_game_handicap),
                 options = listOf(0, 2, 3, 4, 5),
                 selected = handicap,
                 optionLabel = { "$it" },
@@ -108,9 +121,9 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
             Spacer(Modifier.height(10.dp))
             TextMMD(
                 text = if (handicap == 0) {
-                    "Black plays first."
+                    stringResource(R.string.new_game_black_first)
                 } else {
-                    "Black starts with $handicap stones on the board, and White plays first."
+                    stringResource(R.string.new_game_handicap_explained, handicap)
                 },
                 style = MaterialTheme.typography.labelSmall,
             )
@@ -155,7 +168,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                         .weight(1f)
                         .height(54.dp),
                 ) {
-                    TextMMD(text = "Set up", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                    TextMMD(text = stringResource(R.string.new_game_set_up), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                 }
                 ButtonMMD(
                     onClick = {
@@ -172,7 +185,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                         .weight(1f)
                         .height(54.dp),
                 ) {
-                    TextMMD(text = "Play", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
+                    TextMMD(text = stringResource(R.string.new_game_play), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
                 }
             }
         }

@@ -27,12 +27,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mudita.mmd.components.buttons.ButtonMMD
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
+import com.wanderwildwood.kuroban.R
 import com.wanderwildwood.kuroban.game.GameState
 import com.wanderwildwood.kuroban.game.Phase
 import com.wanderwildwood.kuroban.game.Point
@@ -179,19 +181,19 @@ fun GameScreen(
 
     val result = state.result
     if (result != null && !resultDismissed && !menuOpen) {
+        val scoredKomi = stringResource(R.string.game_result_scored, state.config.komi)
+        val scoredKomiHandicap = stringResource(R.string.game_result_scored_handicap, state.config.komi, state.config.handicap)
+        val deadMarked = stringResource(R.string.game_result_dead_marked)
         EInkDialog(onDismiss = { resultDismissed = true }) {
             TextMMD(text = result, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             if (state.wasScored) {
                 TextMMD(
                     text = buildString {
-                        append("Scored with komi ${state.config.komi}")
-                        if (state.config.handicap >= 2) {
-                            append(" and ${state.config.handicap} handicap stones")
-                        }
-                        append(".")
+                        append(if (state.config.handicap >= 2) scoredKomiHandicap else scoredKomi)
                         if (state.dead.isNotEmpty()) {
-                            append(" Stones marked × were counted as dead.")
+                            append(" ")
+                            append(deadMarked)
                         }
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -205,14 +207,14 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "New game", style = MaterialTheme.typography.bodySmall) }
+            ) { TextMMD(text = stringResource(R.string.game_new_game), style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             OutlinedButtonMMD(
                 onClick = { resultDismissed = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "Look at board", style = MaterialTheme.typography.bodySmall) }
+            ) { TextMMD(text = stringResource(R.string.game_look_at_board), style = MaterialTheme.typography.bodySmall) }
         }
     }
 
@@ -222,10 +224,10 @@ fun GameScreen(
     // makes it happen again, was the part that got cut off.
     if (state.phase == Phase.BROKEN && !breakageDismissed && !menuOpen) {
         EInkDialog(onDismiss = { breakageDismissed = true }) {
-            TextMMD(text = "The game stopped", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            TextMMD(text = stringResource(R.string.game_stopped_title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(8.dp))
             TextMMD(
-                text = state.message ?: "The engine stopped answering.",
+                text = state.message ?: stringResource(R.string.game_stopped_default),
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(18.dp))
@@ -234,14 +236,14 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "New game", style = MaterialTheme.typography.bodySmall) }
+            ) { TextMMD(text = stringResource(R.string.game_new_game), style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             OutlinedButtonMMD(
                 onClick = { breakageDismissed = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-            ) { TextMMD(text = "Look at board", style = MaterialTheme.typography.bodySmall) }
+            ) { TextMMD(text = stringResource(R.string.game_look_at_board), style = MaterialTheme.typography.bodySmall) }
         }
     }
 }
@@ -345,7 +347,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Undo", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+        ) { TextMMD(text = stringResource(R.string.game_undo), style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         OutlinedButtonMMD(
             onClick = onPass,
@@ -354,7 +356,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Pass", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+        ) { TextMMD(text = stringResource(R.string.game_pass), style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         OutlinedButtonMMD(
             onClick = onHint,
@@ -363,7 +365,7 @@ private fun BottomBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Hint", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+        ) { TextMMD(text = stringResource(R.string.game_hint), style = MaterialTheme.typography.labelSmall, maxLines = 1) }
 
         if (state.preview != null) {
             ButtonMMD(
@@ -372,7 +374,7 @@ private fun BottomBar(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-            ) { TextMMD(text = "Place", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
+            ) { TextMMD(text = stringResource(R.string.game_place), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
         } else {
             OutlinedButtonMMD(
                 onClick = {},
@@ -381,7 +383,7 @@ private fun BottomBar(
                 modifier = Modifier
                     .weight(1f)
                     .height(48.dp),
-            ) { TextMMD(text = "Place", style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+            ) { TextMMD(text = stringResource(R.string.game_place), style = MaterialTheme.typography.labelSmall, maxLines = 1) }
         }
     }
 }
@@ -410,7 +412,7 @@ private fun SetupBar(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        for ((label, stone) in listOf("Black" to Stone.BLACK, "White" to Stone.WHITE, "Erase" to null)) {
+        for ((label, stone) in listOf(stringResource(R.string.stone_black) to Stone.BLACK, stringResource(R.string.stone_white) to Stone.WHITE, stringResource(R.string.setup_erase) to null)) {
             val content: @Composable () -> Unit = {
                 TextMMD(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
@@ -439,7 +441,7 @@ private fun SetupBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-        ) { TextMMD(text = "Play", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
+        ) { TextMMD(text = stringResource(R.string.setup_play), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, maxLines = 1) }
     }
 }
 
@@ -466,28 +468,28 @@ private fun MenuDialog(
     onDismiss: () -> Unit,
 ) {
     EInkDialog(onDismiss = onDismiss) {
-        TextMMD(text = "Menu", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+        TextMMD(text = stringResource(R.string.menu_title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(18.dp))
         ButtonMMD(
             onClick = onDismiss,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-        ) { TextMMD(text = if (settingUp) "Back to the board" else "Back to game", style = MaterialTheme.typography.bodySmall) }
+        ) { TextMMD(text = if (settingUp) stringResource(R.string.menu_back_to_board) else stringResource(R.string.menu_back_to_game), style = MaterialTheme.typography.bodySmall) }
         Spacer(Modifier.height(10.dp))
         ConfirmingButton(
-            label = "New game",
+            label = stringResource(R.string.game_new_game),
             armedLabel = if (settingUp) {
-                "Throw away this position — tap again"
+                stringResource(R.string.menu_throw_away_position_armed)
             } else {
-                "Give up this game — tap again"
+                stringResource(R.string.menu_give_up_game_armed)
             },
             onConfirmed = onNewGame,
         )
         Spacer(Modifier.height(10.dp))
         ConfirmingButton(
-            label = "Resign",
-            armedLabel = "Resign — tap again",
+            label = stringResource(R.string.menu_resign),
+            armedLabel = stringResource(R.string.menu_resign_armed),
             enabled = canResign,
             onConfirmed = onResign,
         )
@@ -532,12 +534,13 @@ private fun ConfirmingButton(
     }
 }
 
+@Composable
 private fun GameState.statusText(): String = when (phase) {
-    Phase.STARTING -> "Starting…"
+    Phase.STARTING -> stringResource(R.string.status_starting)
     // The glyph beside this says which colour, the way it does mid-game.
-    Phase.SETUP -> "plays first"
-    Phase.THINKING -> "Thinking…"
-    Phase.BROKEN -> "Engine stopped"
-    Phase.FINISHED -> result ?: "Game over"
-    Phase.PLAYING -> "Your move"
+    Phase.SETUP -> stringResource(R.string.status_plays_first)
+    Phase.THINKING -> stringResource(R.string.status_thinking)
+    Phase.BROKEN -> stringResource(R.string.status_engine_stopped)
+    Phase.FINISHED -> result ?: stringResource(R.string.status_game_over)
+    Phase.PLAYING -> stringResource(R.string.status_your_move)
 }
