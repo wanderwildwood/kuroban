@@ -50,9 +50,6 @@ fun AboutDialog(onDismiss: () -> Unit) {
         )
 
         Spacer(Modifier.height(14.dp))
-        TextMMD(text = "wanderthe.dev", style = MaterialTheme.typography.labelSmall)
-
-        Spacer(Modifier.height(14.dp))
         TextMMD(
             text = stringResource(R.string.about_little_lions),
             style = MaterialTheme.typography.labelSmall,
@@ -78,6 +75,8 @@ fun AboutDialog(onDismiss: () -> Unit) {
  * Three words rather than an address: a verb and an object, so what happens when you press
  * them is not a surprise even though the page is not named. The drawing is his own, and it is
  * ink rather than an emoji, which is a colour glyph and reaches the panel as a pale smudge.
+ * The site's address sits at the start of the same line, and only the llama and its words
+ * open the page.
  *
  * The Kompakt may have nothing registered for a web address, so the intent is allowed to fail
  * quietly rather than take the dialog down with it.
@@ -87,30 +86,36 @@ private fun Llama() {
     val context = LocalContext.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                // Straight to the checkout. The Donate button on the site only leads
-                // here anyway, so the page in between is a press the reader does not need.
-                // The short square.link form, not the long checkout.square.site address it
-                // redirects to -- the short one is what the site itself links to, so a
-                // regenerated checkout follows it and a published app does not break.
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://square.link/u/AGu8oT10")),
-                    )
-                }.onFailure {
-                    Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
-                }
-            }
-            .padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Image(
-            painter = painterResource(R.drawable.llama),
-            contentDescription = null,
-            modifier = Modifier.size(22.dp),
-        )
-        Spacer(Modifier.width(6.dp))
-        TextMMD(text = stringResource(R.string.about_feed_llamas), style = MaterialTheme.typography.labelSmall)
+        TextMMD(text = "wanderthe.dev", style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.width(12.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable {
+                    // Straight to the checkout. The Donate button on the site only leads
+                    // here anyway, so the page in between is a press the reader does not need.
+                    // The short square.link form, not the long checkout.square.site address it
+                    // redirects to -- the short one is what the site itself links to, so a
+                    // regenerated checkout follows it and a published app does not break.
+                    runCatching {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://square.link/u/AGu8oT10")),
+                        )
+                    }.onFailure {
+                        Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .padding(vertical = 4.dp),
+        ) {
+            Image(
+                painter = painterResource(R.drawable.llama),
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            TextMMD(text = stringResource(R.string.about_feed_llamas), style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
