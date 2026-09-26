@@ -121,6 +121,6 @@
     <string name="about_little_lions">New to the 9x9 board? ‘81 Little Lions’ by Immanuel deVillers:</string>
     <string name="about_close">Close</string>
     <!-- Opens the donation page -->
-    <string name="about_feed_llamas">Feed the llamas</string>
+    <string name="about_feed_llamas">feed the llamas</string>
     <string name="about_no_browser">There is no browser on this phone to open that with.</string>
 </resources>
