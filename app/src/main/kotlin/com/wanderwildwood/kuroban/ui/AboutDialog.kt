@@ -75,7 +75,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
  * Three words rather than an address: a verb and an object, so what happens when you press
  * them is not a surprise even though the page is not named. The drawing is his own, and it is
  * ink rather than an emoji, which is a colour glyph and reaches the panel as a pale smudge.
- * The site's address sits at the start of the same line, and only the llama and its words
+ * The site's address sits at the start of the same line and opens the site; the llama and its words
  * open the page.
  *
  * The Kompakt may have nothing registered for a web address, so the intent is allowed to fail
@@ -88,7 +88,22 @@ private fun Llama() {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        TextMMD(text = "wanderthe.dev", style = MaterialTheme.typography.labelSmall)
+        TextMMD(
+            text = "wanderthe.dev",
+            style = MaterialTheme.typography.labelSmall,
+            // The site's address opens the site, the way the llama beside it opens its page.
+            modifier = Modifier
+                .clickable {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://wanderthe.dev")),
+                        )
+                    }.onFailure {
+                        Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .padding(vertical = 4.dp),
+        )
         Spacer(Modifier.width(6.dp))
         Row(
             verticalAlignment = Alignment.CenterVertically,
