@@ -4,5 +4,20 @@
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:statusBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">true</item>
+
+        <!--
+          No splash screen.
+
+          Android 12 shows one whether or not an app asks, and the only lever is what it
+          draws, so it draws nothing: a transparent icon on white, the same white the
+          app opens onto. A logo that flashes up and vanishes is worth less than nothing
+          on e-ink, where it costs a full-panel refresh before the app has done anything.
+
+          Base theme, not values-v31: minSdk is already 31, so a v31 qualifier would
+          select for everything and only hide that.
+        -->
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_nothing</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
     </style>
 </resources>
