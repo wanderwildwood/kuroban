@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Go: launcher icon in the Mudita Kompakt stock style (81 grid, ring r=19.25 x 2.5,
+     glyph stroke 2.5, black on transparent). Built by icons/mudita-style/final.py. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="81dp"
+    android:height="81dp"
+    android:viewportWidth="81"
+    android:viewportHeight="81">
+    <path
+        android:pathData="M19.25,2.5C9.999,2.5 2.5,9.999 2.5,19.25V61.75C2.5,71.001 9.999,78.5 19.25,78.5H61.75C71.001,78.5 78.5,71.001 78.5,61.75V19.25C78.5,9.999 71.001,2.5 61.75,2.5H19.25ZM0,19.25C0,8.619 8.619,0 19.25,0H61.75C72.382,0 81,8.619 81,19.25V61.75C81,72.382 72.382,81 61.75,81H19.25C8.619,81 0,72.382 0,61.75V19.25Z"
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"/>
+    <path
+        android:pathData="M22.405,22.405 L58.595,22.405 M22.405,34.468 L58.595,34.468 M22.405,46.532 L58.595,46.532 M22.405,58.595 L58.595,58.595"
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter"/>
+    <path
+        android:pathData="M22.405,22.405 L22.405,58.595 M34.468,22.405 L34.468,58.595 M46.532,22.405 L46.532,58.595 M58.595,22.405 L58.595,58.595"
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter"/>
+    <path
+        android:pathData="M27.833,34.468 A6.635,6.635 0 1,1 41.103,34.468 A6.635,6.635 0 1,1 27.833,34.468Z"
+        android:fillColor="#FF000000"/>
+    <path
+        android:pathData="M39.897,46.532 A6.635,6.635 0 1,1 53.167,46.532 A6.635,6.635 0 1,1 39.897,46.532Z"
+        android:fillColor="#FFFFFFFF"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter"/>
+</vector>
