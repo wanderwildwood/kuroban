@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -47,6 +49,9 @@ fun Goban(
 ) {
     val ink = MaterialTheme.colorScheme.onSurface
     val paper = MaterialTheme.colorScheme.surface
+    // The tap handler below lives as long as the board keeps its size, so it calls whatever
+    // onTap is newest: leaving set-up for play hands it a new one at the same size.
+    val currentOnTap by rememberUpdatedState(onTap)
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val side = minOf(maxWidth, maxHeight)
         val density = LocalDensity.current
@@ -75,7 +80,7 @@ fun Goban(
                         val col = ((offset.x - originX) / cell).roundToInt()
                         val row = ((offset.y - originY) / cell).roundToInt()
                         if (col in 0 until BOARD_SIZE && row in 0 until BOARD_SIZE) {
-                            onTap(Point(col, row))
+                            currentOnTap(Point(col, row))
                         }
                     }
                 }
