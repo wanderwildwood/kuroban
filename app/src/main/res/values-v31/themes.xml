@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!--
+          No splash screen.
+
+          Android 12 shows one whether or not an app asks, and the only lever is what it
+          draws, so it draws nothing: a transparent icon on white, the same white the
+          app opens onto. A logo that flashes up and vanishes is worth less than nothing
+          on e-ink, where it costs a full-panel refresh before the app has done anything.
+
+          Android 11 has no splash screen, so the base theme leaves these out.
+        -->
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_nothing</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+    </style>
+</resources>

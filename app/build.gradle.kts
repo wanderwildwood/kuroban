@@ -12,8 +12,9 @@ android {
 
     defaultConfig {
         applicationId = "com.wanderwildwood.kuroban"
-        // The Kompakt runs Android 12 (API 31); nothing here needs anything newer.
-        minSdk = 31
+        // The Kompakt runs Android 12 (API 31); nothing here needs anything newer, or even
+        // that: Supernote's tablets run Android 11 (API 30), and it installs there too.
+        minSdk = 30
         targetSdk = 31
         versionCode = 25
         versionName = "1.2.12"
