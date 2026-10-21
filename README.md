@@ -1,7 +1,8 @@
 # 九路盤 kuroban — Go
 
 A game of Go for the [Mudita Kompakt](https://mudita.com/products/kompakt/), built for its
-E Ink screen. 9x9, against GNU Go or two people passing one phone back and forth.
+E Ink screen. 9x9, against GNU Go or two people passing one phone back and forth. It will
+install on any 64-bit ARM device with Android 11 or later, Supernote's tablets among them.
 
 *Kuroban* is 九路盤 — a nine-road board. The 路 are the lines you play on, so a full board is a
 十九路盤 and this one is the small board: the one you learn on, the one a game finishes on in an
