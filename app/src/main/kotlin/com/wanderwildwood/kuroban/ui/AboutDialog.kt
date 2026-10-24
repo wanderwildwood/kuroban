@@ -34,13 +34,16 @@ import com.wanderwildwood.kuroban.R
  * source rights at all, and a licence nobody can find is not much of one.
  */
 @Composable
-fun AboutDialog(onDismiss: () -> Unit) {
+fun AboutDialog(buzz: Boolean, onBuzz: (Boolean) -> Unit, onDismiss: () -> Unit) {
     EInkDialog(onDismiss = onDismiss) {
         TextMMD(
             text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium,
         )
+
+        Spacer(Modifier.height(14.dp))
+        BuzzRow(on = buzz, onChange = onBuzz)
 
         Spacer(Modifier.height(14.dp))
         TextMMD(text = stringResource(R.string.about_licence), style = MaterialTheme.typography.labelSmall)

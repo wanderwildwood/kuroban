@@ -46,7 +46,7 @@ import com.wanderwildwood.kuroban.game.Stone
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
+fun NewGameScreen(buzz: Boolean, onBuzz: (Boolean) -> Unit, onPlay: (GameConfig) -> Unit) {
     var opponent by remember { mutableStateOf(Opponent.COMPUTER) }
     var difficulty by remember { mutableStateOf(Difficulty.NORMAL) }
     var humanColor by remember { mutableStateOf(Stone.BLACK) }
@@ -192,7 +192,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
     }
 
     if (aboutOpen) {
-        AboutDialog(onDismiss = { aboutOpen = false })
+        AboutDialog(buzz = buzz, onBuzz = onBuzz, onDismiss = { aboutOpen = false })
     }
 }
 
