@@ -38,7 +38,6 @@ already ships with, with GNU Go bundled as the engine.
   game can be taken back into, so a game lost to one careless move is still worth looking at.
 - Two passes end the game and GNU Go scores it, including working out
   which stones are dead. Those are marked with a × on the board.
-- An optional buzz: a setting, Vibrate when a stone is placed, gives a short tick when a move registers (a stone, a pass, a move taken back), so you know the tap landed before the slow screen catches up. It is off until you turn it on.
 - It keeps the game you were in the middle of. Turn the phone off mid-game and it comes
   back, undo history included.
 - No permissions and no network. Nothing leaves the phone, because there is no route off

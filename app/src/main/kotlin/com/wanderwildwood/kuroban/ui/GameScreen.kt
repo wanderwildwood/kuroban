@@ -56,8 +56,6 @@ fun GameScreen(
     onSetupTap: (Point, Stone?) -> Unit,
     onFirstToMove: (Stone) -> Unit,
     onPlayFromSetup: () -> Unit,
-    buzz: Boolean,
-    onBuzz: (Boolean) -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     // What a tap on the board puts down while a position is being set up, or null for
@@ -168,8 +166,6 @@ fun GameScreen(
 
     if (menuOpen) {
         MenuDialog(
-            buzz = buzz,
-            onBuzz = onBuzz,
             canResign = state.phase == Phase.PLAYING,
             settingUp = state.phase == Phase.SETUP,
             onResign = {
@@ -466,8 +462,6 @@ private val TIGHT = androidx.compose.foundation.layout.PaddingValues(horizontal 
  */
 @Composable
 private fun MenuDialog(
-    buzz: Boolean,
-    onBuzz: (Boolean) -> Unit,
     canResign: Boolean,
     settingUp: Boolean,
     onResign: () -> Unit,
@@ -500,8 +494,6 @@ private fun MenuDialog(
             enabled = canResign,
             onConfirmed = onResign,
         )
-        Spacer(Modifier.height(18.dp))
-        BuzzRow(on = buzz, onChange = onBuzz)
     }
 }
 

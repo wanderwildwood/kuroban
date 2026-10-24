@@ -1,7 +1,6 @@
 package com.wanderwildwood.kuroban.game
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.wanderwildwood.kuroban.R
@@ -11,11 +10,8 @@ import com.wanderwildwood.kuroban.engine.GnuGo
 import com.wanderwildwood.kuroban.engine.GnuGoException
 import com.wanderwildwood.kuroban.engine.writePosition
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -79,22 +75,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
      * not a rare race: two quick taps on Pass would end the game by accident.
      */
     private val moveInFlight = AtomicBoolean(false)
-
-    /** Remembered between visits; off to begin with. */
-    val buzz = BuzzSetting(application.getSharedPreferences("kuroban", Context.MODE_PRIVATE))
-
-    private val _ticks = MutableSharedFlow<Unit>(extraBufferCapacity = 4)
-
-    /**
-     * One item for each move of the player's own that was accepted - a stone placed, a pass,
-     * a move taken back, a stone put down or lifted in set-up - and only while [buzz] is on.
-     * The computer's reply, a preview stone, and a tap on an illegal point give none.
-     */
-    val ticks: SharedFlow<Unit> = _ticks.asSharedFlow()
-
-    private fun tick() {
-        if (buzz.on.value) _ticks.tryEmit(Unit)
-    }
 
     private val _state = MutableStateFlow<GameState?>(null)
     val state: StateFlow<GameState?> = _state.asStateFlow()
@@ -280,7 +260,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     setupBlack = black
                     setupWhite = white
-                    tick()
                     sync(active, Phase.SETUP)
                 }
             } catch (e: Exception) {
@@ -378,7 +357,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 active.play(toMove, point)
-                tick()
                 movesPlayed++
                 moves += point
                 consecutivePasses = 0
@@ -401,7 +379,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 active.play(toMove, null)
-                tick()
                 movesPlayed++
                 moves += null
                 consecutivePasses++
@@ -477,7 +454,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val steps = minOf(current.movesPerUndo, movesPlayed)
                 repeat(steps) { active.undo() }
-                tick()
                 repeat(steps) { moves.removeLastOrNull() }
                 movesPlayed -= steps
                 // Whether the passes that ended the game are still on the board is no
