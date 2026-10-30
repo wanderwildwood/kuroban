@@ -86,8 +86,12 @@ fun LicencesScreen(onBack: () -> Unit) {
                     item { Link(stringResource(R.string.licences_source, SOURCE_URL.removePrefix("https://")), SOURCE_URL) }
                     item { Heading(stringResource(R.string.licences_licence_heading)) }
                     item { Paragraph(stringResource(R.string.licences_licence)) }
-                    item { Heading(stringResource(R.string.licences_gnugo_heading)) }
-                    item { Paragraph(stringResource(R.string.licences_gnugo)) }
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Heading(stringResource(R.string.licences_gnugo_heading))
+                            Paragraph(stringResource(R.string.licences_gnugo))
+                        }
+                    }
                     item { Link(stringResource(R.string.licences_gnugo_source, GNUGO_SOURCE_URL.removePrefix("https://")), GNUGO_SOURCE_URL) }
                     item { Link(stringResource(R.string.licences_gnugo_site, GNUGO_SITE_URL.removePrefix("https://")), GNUGO_SITE_URL) }
                     item { Heading(stringResource(R.string.licences_built_heading)) }
