@@ -1,5 +1,14 @@
 package com.wanderwildwood.kuroban.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Surface
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,70 +43,73 @@ import com.wanderwildwood.kuroban.R
  */
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
-    EInkDialog(onDismiss = onDismiss) {
-        TextMMD(
-            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
-
-        Spacer(Modifier.height(10.dp))
-        TextMMD(
-            text = stringResource(R.string.about_privacy_head),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        TextMMD(text = stringResource(R.string.about_privacy), style = MaterialTheme.typography.labelSmall)
-
-        Spacer(Modifier.height(10.dp))
-        TextMMD(
-            text = stringResource(R.string.about_terms_head),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        TextMMD(text = stringResource(R.string.about_terms), style = MaterialTheme.typography.labelSmall)
-
-        Spacer(Modifier.height(4.dp))
-        LicencesLink()
-
-        Spacer(Modifier.height(10.dp))
-        TextMMD(text = stringResource(R.string.about_licence), style = MaterialTheme.typography.labelSmall)
-        TextMMD(
-            text = stringResource(R.string.about_gnugo),
-            style = MaterialTheme.typography.labelSmall,
-        )
-
-        Spacer(Modifier.height(14.dp))
-        TextMMD(
-            text = stringResource(R.string.about_little_lions),
-            style = MaterialTheme.typography.labelSmall,
-        )
-        val lionsContext = LocalContext.current
-        TextMMD(
-            text = "archive.org/details/81LittleLions",
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier
-                .clickable {
-                    openLink(
-                        lionsContext,
-                        "https://archive.org/details/81LittleLions",
-                        lionsContext.getString(R.string.about_no_browser_address, "archive.org/details/81LittleLions"),
-                    )
+    // A full screen of pages rather than a dialog: with Privacy, Terms and Licences it is longer
+    // than a panel, and a page turns on whole rows like every other list here.
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.fillMaxSize().safeDrawingPadding()) {
+                PagedColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    item {
+                        TextMMD(
+                            text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                    item {
+                        TextMMD(
+                            text = stringResource(R.string.about_privacy_head),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    item { TextMMD(text = stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium) }
+                    item {
+                        TextMMD(
+                            text = stringResource(R.string.about_terms_head),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    item { TextMMD(text = stringResource(R.string.about_terms), style = MaterialTheme.typography.bodyMedium) }
+                    item { LicencesLink() }
+                    item { TextMMD(text = stringResource(R.string.about_licence), style = MaterialTheme.typography.bodyMedium) }
+                    item { TextMMD(text = stringResource(R.string.about_gnugo), style = MaterialTheme.typography.bodyMedium) }
+                    item { TextMMD(text = stringResource(R.string.about_little_lions), style = MaterialTheme.typography.bodyMedium) }
+                    item {
+                        val lionsContext = LocalContext.current
+                        TextMMD(
+                            text = "archive.org/details/81LittleLions",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    openLink(
+                                        lionsContext,
+                                        "https://archive.org/details/81LittleLions",
+                                        lionsContext.getString(R.string.about_no_browser_address, "archive.org/details/81LittleLions"),
+                                    )
+                                }
+                                .heightIn(min = 48.dp)
+                                .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                    }
+                    item { Llama() }
                 }
-                .heightIn(min = 48.dp)
-                .wrapContentHeight(Alignment.CenterVertically),
-        )
-
-        Spacer(Modifier.height(14.dp))
-        Llama()
-
-        Spacer(Modifier.height(18.dp))
-        OutlinedButtonMMD(
-            onClick = onDismiss,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-        ) { TextMMD(text = stringResource(R.string.about_close), style = MaterialTheme.typography.bodySmall) }
+                OutlinedButtonMMD(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .height(48.dp),
+                ) { TextMMD(text = stringResource(R.string.about_close), style = MaterialTheme.typography.bodyMedium) }
+            }
+        }
     }
 }
 
@@ -128,6 +140,7 @@ private fun Llama() {
                 .clickable {
                     openLink(context, "https://wanderthe.dev", context.getString(R.string.about_no_browser_address, "wanderthe.dev"))
                 }
+                .heightIn(min = 48.dp)
                 .padding(vertical = 4.dp),
         )
         Spacer(Modifier.width(6.dp))
@@ -142,6 +155,7 @@ private fun Llama() {
                     // regenerated checkout follows it and a published app does not break.
                     openLink(context, "https://square.link/u/AGu8oT10", context.getString(R.string.about_no_browser_address, "square.link/u/AGu8oT10"))
                 }
+                .heightIn(min = 48.dp)
                 .padding(vertical = 4.dp),
         ) {
             Image(
