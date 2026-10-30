@@ -11,13 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.wanderwildwood.kuroban.BuildConfig
-import android.content.Intent
-import android.widget.Toast
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
@@ -42,7 +41,26 @@ fun AboutDialog(onDismiss: () -> Unit) {
             fontWeight = FontWeight.Medium,
         )
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(10.dp))
+        TextMMD(
+            text = stringResource(R.string.about_privacy_head),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        TextMMD(text = stringResource(R.string.about_privacy), style = MaterialTheme.typography.labelSmall)
+
+        Spacer(Modifier.height(10.dp))
+        TextMMD(
+            text = stringResource(R.string.about_terms_head),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        TextMMD(text = stringResource(R.string.about_terms), style = MaterialTheme.typography.labelSmall)
+
+        Spacer(Modifier.height(4.dp))
+        LicencesLink()
+
+        Spacer(Modifier.height(10.dp))
         TextMMD(text = stringResource(R.string.about_licence), style = MaterialTheme.typography.labelSmall)
         TextMMD(
             text = stringResource(R.string.about_gnugo),
@@ -54,7 +72,21 @@ fun AboutDialog(onDismiss: () -> Unit) {
             text = stringResource(R.string.about_little_lions),
             style = MaterialTheme.typography.labelSmall,
         )
-        TextMMD(text = "archive.org/details/81LittleLions", style = MaterialTheme.typography.labelSmall)
+        val lionsContext = LocalContext.current
+        TextMMD(
+            text = "archive.org/details/81LittleLions",
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier
+                .clickable {
+                    openLink(
+                        lionsContext,
+                        "https://archive.org/details/81LittleLions",
+                        lionsContext.getString(R.string.about_no_browser_address, "archive.org/details/81LittleLions"),
+                    )
+                }
+                .heightIn(min = 48.dp)
+                .wrapContentHeight(Alignment.CenterVertically),
+        )
 
         Spacer(Modifier.height(14.dp))
         Llama()
@@ -94,13 +126,7 @@ private fun Llama() {
             // The site's address opens the site, the way the llama beside it opens its page.
             modifier = Modifier
                 .clickable {
-                    runCatching {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://wanderthe.dev")),
-                        )
-                    }.onFailure {
-                        Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
-                    }
+                    openLink(context, "https://wanderthe.dev", context.getString(R.string.about_no_browser_address, "wanderthe.dev"))
                 }
                 .padding(vertical = 4.dp),
         )
@@ -114,13 +140,7 @@ private fun Llama() {
                     // The short square.link form, not the long checkout.square.site address it
                     // redirects to -- the short one is what the site itself links to, so a
                     // regenerated checkout follows it and a published app does not break.
-                    runCatching {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://square.link/u/AGu8oT10")),
-                        )
-                    }.onFailure {
-                        Toast.makeText(context, context.getString(R.string.about_no_browser), Toast.LENGTH_SHORT).show()
-                    }
+                    openLink(context, "https://square.link/u/AGu8oT10", context.getString(R.string.about_no_browser_address, "square.link/u/AGu8oT10"))
                 }
                 .padding(vertical = 4.dp),
         ) {

@@ -121,4 +121,5 @@ GPL-3.0-only. See [LICENSE](LICENSE).
 This app bundles [GNU Go](https://www.gnu.org/software/gnugo/), Copyright 1999-2009 by the Free
 Software Foundation, Inc., released under the GPL version 3 or later. Bundling it makes this
 whole work GPL too; version 3 is the version taken here. GNU Go's complete corresponding
-source is in `engine/gnugo-3.8.tar.gz`, unmodified, along with the script that builds it.
+source is in `engine/gnugo-3.8.tar.gz`, unmodified, along with the script that builds it. In the app,
+About, Licences shows the source address, the GNU Go source offer, the full licence texts and what the app is built with.

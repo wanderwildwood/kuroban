@@ -24,4 +24,13 @@
         </activity>
     </application>
 
+    <queries>
+        <!-- Web browsers, so a link goes to a real one and never to the WebView test shell. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
 </manifest>
