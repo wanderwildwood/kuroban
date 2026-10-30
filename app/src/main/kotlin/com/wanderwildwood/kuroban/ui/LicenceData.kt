@@ -9,7 +9,7 @@ data class Library(
 )
 
 /** The address of the app's own source code. */
-const val SOURCE_URL = "https://github.com.wanderwildwood.kuroban"
+const val SOURCE_URL = "https://github.com/wanderwildwood/kuroban"
 
 /** The unmodified GNU Go 3.8 source tarball and the script that builds it, in the app's repository. */
 const val GNUGO_SOURCE_URL = "https://github.com/wanderwildwood/kuroban/tree/main/engine"
