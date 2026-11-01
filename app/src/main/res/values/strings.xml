@@ -125,28 +125,18 @@
     <string name="about_terms">This app is free software under the GNU General Public License, version 3 only. It comes with no warranty: use it at your own risk.</string>
     <string name="about_no_browser_address">No browser is installed. The address is %1$s.</string>
     <string name="licences_title">Licences</string>
-    <string name="licences_source_heading">Source code</string>
+    <string name="licences_source_head">Source code</string>
     <string name="licences_source">Source: %1$s</string>
-    <string name="licences_licence_heading">Licence</string>
-    <string name="licences_licence">Go is free software under the GNU General Public License, version 3 only. Copyright wander wildwood. The full text is below.</string>
-    <string name="licences_gnugo_heading">GNU Go source</string>
-    <string name="licences_gnugo">The opponent is GNU Go 3.8, Copyright 1999-2009 Free Software Foundation, Inc., under the GNU General Public License. It is built into this app unmodified. Its complete source, and the script that builds it, are offered here:</string>
-    <string name="licences_gnugo_source">GNU Go 3.8 source and build script: %1$s</string>
-    <string name="licences_gnugo_site">GNU Go: %1$s</string>
-    <string name="licences_built_heading">Built with</string>
-    <string name="licences_gpl">GNU General Public License, version 3</string>
-    <string name="licences_apache">Apache License, version 2.0</string>
-    <string name="licences_ofl">SIL Open Font License, version 1.1</string>
-    <string name="licences_no_browser">No browser is installed. The address is %1$s.</string>
-    <string name="licences_close">Close</string>
+    <string name="licences_licence_head">Licence</string>
+    <string name="licences_licence">Go is free software under the GNU General Public License, version 3 only. Copyright wander wildwood.</string>
+    <string name="licences_built_head">Built with</string>
     <string name="about_close">Close</string>
     <!-- Opens the donation page -->
     <string name="about_feed_llamas">feed the llamas</string>
     <string name="about_no_browser">There is no browser on this phone to open that with.</string>
-    <!-- The folio at the foot of a paged list, "2 / 6"; a tap on it asks for a page -->
-    <string name="folio_of">%1$d / %2$d</string>
-    <string name="folio_go_title">Go to page</string>
-    <string name="folio_page">Page %1$d of %2$d</string>
-    <string name="folio_go">Go</string>
-    <string name="folio_cancel">Cancel</string>
+    <string name="licences_back">Back</string>
+    <string name="licences_full_head">Full texts</string>
+    <string name="licences_full_gpl">GNU General Public License v3 (full text)</string>
+    <string name="licences_full_apache">Apache License 2.0 (full text)</string>
+    <string name="licences_full_ofl">SIL Open Font Licence 1.1 (full text)</string>
 </resources>

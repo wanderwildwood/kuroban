@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -60,10 +61,10 @@ fun EInkDialog(
                 .padding(horizontal = 20.dp)
                 .fillMaxWidth(),
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-                content = content,
-            )
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 18.dp)) {
+                // The lists inside run out into this padding, so their scrollbar sits near the rim.
+                CompositionLocalProvider(LocalListBleed provides 14.dp) { content() }
+            }
         }
     }
 }
