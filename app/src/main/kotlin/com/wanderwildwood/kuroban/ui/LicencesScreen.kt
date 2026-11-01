@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,11 +32,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * The Licences screen: a short paged page (source link, the app's licence, Built with, and a
- * "Full texts" list with one row per licence), and behind each of those rows the full text on a
- * paged screen of its own. [modifier] gives the size (a dialog passes a fixed height, a screen
- * fillMaxSize). [showBackButton] adds a Back button under the short page; the full-text screen
- * always has one, and the system Back returns from it to the short page.
+ * The Licences screen, the way Mudita's own apps do it: a plain list whose first row is the app
+ * itself and then one row per library (name, author), alphabetical. A row opens that project's
+ * page: its author, licence, a link to its website and the full licence text, paged by whole
+ * paragraphs. The app's page carries the GPL text and the Source code link. [modifier] gives the
+ * size (a dialog passes a fixed height, a screen fillMaxSize). [showBackButton] adds a Back button
+ * under the list; a page always has one, and the system Back returns from it to the list at the
+ * place it was left.
  */
 @Composable
 fun LicencesScreen(
@@ -48,40 +50,16 @@ fun LicencesScreen(
     showTitle: Boolean = true,
 ) {
     var open by rememberSaveable { mutableStateOf<String?>(null) }
-    val text = data.texts.firstOrNull { it.id == open }
-    BackHandler(enabled = text != null) { open = null }
-    if (text != null) {
-        LicenceTextScreen(text, labels, onBack = { open = null }, modifier = modifier)
+    val listState = rememberLazyListState()
+    val page = open?.let { licencePage(data, it) }
+    BackHandler(enabled = page != null) { open = null }
+    if (page != null) {
+        LicencePageScreen(page, labels, isApp = open == APP_ROW_KEY, onBack = { open = null }, modifier = modifier)
         return
     }
-    val context = LocalContext.current
-    val go = { url: String -> openLink(context, url, labels.noBrowser(url.removePrefix("https://"))) }
     LicencesFrame(modifier, title = if (showTitle) labels.title else null, back = if (showBackButton) labels.back else null, onBack = onBack) { pageModifier ->
-        PagedColumn(modifier = pageModifier) {
-            // A heading never ends a page alone: it shares a row with what follows it.
-            item(key = "source") {
-                Column {
-                    LicencesHeading(labels.sourceHeading)
-                    LicencesLinkRow(data.sourceUrl.removePrefix("https://")) { go(data.sourceUrl) }
-                }
-            }
-            item(key = "licence") {
-                Column {
-                    LicencesHeading(labels.licenceHeading)
-                    LicencesBody(data.licenceLine)
-                }
-            }
-            headed("built", labels.builtWithHeading, data.components) { c -> LicencesLinkRow(componentLine(c)) { go(c.url) } }
-            data.extraGroups.forEach { g ->
-                item(key = "g-${g.heading}") {
-                    Column {
-                        LicencesHeading(g.heading)
-                        g.note?.let { LicencesBody(it) }
-                    }
-                }
-                g.components.forEach { c -> item(key = "gc-${c.name}") { LicencesLinkRow(componentLine(c)) { go(c.url) } } }
-            }
-            headed("texts", labels.fullTextsHeading, orderedTexts(data.texts)) { t -> LicencesLinkRow(t.title, underline = false) { open = t.id } }
+        PagedColumn(modifier = pageModifier, state = listState) {
+            licenceRows(data).forEach { r -> item(key = r.key) { LicenceRowView(r) { open = r.key } } }
         }
     }
 }
@@ -108,31 +86,54 @@ private fun LicencesFrame(modifier: Modifier, title: String?, back: String?, onB
     }
 }
 
-/** Items for [rows] where the first shares its row with [heading], so the heading is never left alone at a page's foot. */
-private fun <T> LazyListScope.headed(key: String, heading: String, rows: List<T>, row: @Composable (T) -> Unit) {
-    rows.forEachIndexed { i, r ->
-        item(key = "$key-$i") {
-            if (i == 0) Column { LicencesHeading(heading); row(r) } else row(r)
-        }
+/** One list row: the name, and under it the author (or, for the app, its licence); 48 dp at least. */
+@Composable
+private fun LicenceRowView(row: LicenceRow, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        TextMMD(text = row.title, style = MaterialTheme.typography.bodyMedium)
+        if (row.subtitle.isNotEmpty()) TextMMD(text = row.subtitle, style = MaterialTheme.typography.bodySmall)
     }
 }
 
-/** "Name, author: licence", the one line a Built-with row shows. */
-fun componentLine(c: LicenceComponent): String = "${c.name}, ${c.author}: ${c.licence}"
-
 @Composable
-private fun LicenceTextScreen(text: LicenceText, labels: LicencesLabels, onBack: () -> Unit, modifier: Modifier) {
+private fun LicencePageScreen(page: LicencePage, labels: LicencesLabels, isApp: Boolean, onBack: () -> Unit, modifier: Modifier) {
     val context = LocalContext.current
-    val paragraphs by produceState(emptyList<String>(), text.rawResId) {
+    val go = { url: String -> openLink(context, url, labels.noBrowser(url.removePrefix("https://"))) }
+    val loaded by produceState(emptyList<List<String>>(), page.title) {
         value = withContext(Dispatchers.IO) {
-            runCatching {
-                licenceParagraphs(context.resources.openRawResource(text.rawResId).bufferedReader().use { it.readText() })
-            }.getOrDefault(emptyList())
+            page.texts.map { t ->
+                runCatching {
+                    licenceParagraphs(context.resources.openRawResource(t.rawResId).bufferedReader().use { it.readText() })
+                }.getOrDefault(emptyList())
+            }
         }
     }
-    LicencesFrame(modifier, title = text.title, back = labels.back, onBack = onBack, titleLines = 2) { pageModifier ->
+    LicencesFrame(modifier, title = null, back = labels.back, onBack = onBack) { pageModifier ->
         PagedColumn(modifier = pageModifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            paragraphs.forEachIndexed { i, p -> item(key = "p-$i") { LicencesBody(p) } }
+            // The name may be long (a library can be several names), so it scrolls with the page rather than sitting in a fixed title.
+            item(key = "title") {
+                TextMMD(text = page.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            }
+            page.author?.let { a -> item(key = "author") { LicencesBody(a) } }
+            item(key = "licence") { LicencesBody(page.licence) }
+            page.url?.let { u ->
+                item(key = "link") { LicencesLinkRow(if (isApp) labels.sourceHeading else u.removePrefix("https://")) { go(u) } }
+            }
+            page.note?.let { n -> item(key = "note") { LicencesBody(n) } }
+            if (page.texts.isEmpty()) {
+                item(key = "none") { LicencesBody(labels.noText(page.licence)) }
+            }
+            page.texts.forEachIndexed { ti, t ->
+                if (page.texts.size > 1) item(key = "h-$ti") { LicencesHeading(t.title) }
+                loaded.getOrNull(ti).orEmpty().forEachIndexed { i, p -> item(key = "p-$ti-$i") { LicencesBody(p) } }
+            }
         }
     }
 }

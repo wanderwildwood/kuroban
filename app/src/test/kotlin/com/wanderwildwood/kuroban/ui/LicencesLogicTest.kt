@@ -53,8 +53,61 @@ class LicencesLogicTest {
         assertTrue(licencesProblems(good.copy(components = listOf(c("a", "MIT"), c("a", "MIT")))).any { "twice" in it })
     }
 
-    @Test fun componentLineReadsNameAuthorLicence() {
-        assertEquals("a, someone: MIT", componentLine(c("a", "MIT")))
+    private fun data() = LicencesData(
+        "App", "https://github.com/x/y", "GPL-3.0-only, holder someone",
+        listOf(c("Zed", "MIT"), c("apache lib", "Apache-2.0"), c("Both", "Apache-2.0 and BSD"), c("Font", "CC BY 4.0")),
+        listOf(t("gpl"), t("apache"), t("mit"), t("bsd")),
+        listOf(ComponentGroup("Downloads", "Fetched when asked.", listOf(c("Model", "MIT")))),
+    )
+
+    @Test fun appRowIsFirstThenLibrariesAlphabetical() {
+        val rows = licenceRows(data())
+        assertEquals(APP_ROW_KEY, rows.first().key)
+        assertEquals("App", rows.first().title)
+        assertEquals("GPL-3.0-only", rows.first().subtitle)
+        assertEquals(listOf("apache lib", "Both", "Font", "Model", "Zed"), rows.drop(1).map { it.title })
+        assertEquals("someone", rows[1].subtitle)
+    }
+
+    @Test fun extraGroupComponentsGetARowAndTheGroupNote() {
+        val p = licencePage(data(), "lib:Model")!!
+        assertEquals("Fetched when asked.", p.note)
+        assertEquals(listOf("mit"), p.texts.map { it.id })
+    }
+
+    @Test fun libraryPageMapsToItsLicenceTexts() {
+        val d = data()
+        assertEquals(listOf("apache", "bsd"), licencePage(d, "lib:Both")!!.texts.map { it.id })
+        val p = licencePage(d, "lib:Zed")!!
+        assertEquals("Zed", p.title)
+        assertEquals("someone", p.author)
+        assertEquals("https://example.org/Zed", p.url)
+        assertEquals(listOf("mit"), p.texts.map { it.id })
+    }
+
+    @Test fun licenceWithNoTextHasNoTextsToShow() {
+        assertTrue(licencePage(data(), "lib:Font")!!.texts.isEmpty())
+    }
+
+    @Test fun appPageCarriesTheGplAndTheSourceLink() {
+        val p = licencePage(data(), APP_ROW_KEY)!!
+        assertEquals("App", p.title)
+        assertEquals(null, p.author)
+        assertEquals("https://github.com/x/y", p.url)
+        assertEquals(listOf("gpl"), p.texts.map { it.id })
+    }
+
+    @Test fun appLicenceNameIsShortened() {
+        assertEquals("GPL-3.0-only", appLicenceName("App is free software: GPL-3.0-only, copyright x. Built on others."))
+        assertEquals("GPL-3.0-only", appLicenceName("App is free software under the GNU General Public License, version 3 only. Copyright x."))
+        assertEquals("GPL-3.0-or-later", appLicenceName("under the GNU General Public License, version 3 or later, as the app is."))
+        assertEquals("Proprietary", appLicenceName("Proprietary"))
+        assertEquals("gpl", licenceFamily("GNU General Public License, version 3"))
+        assertEquals("lgpl", licenceFamily("GNU Lesser General Public License"))
+    }
+
+    @Test fun unknownKeyHasNoPage() {
+        assertEquals(null, licencePage(data(), "lib:Nope"))
     }
 
     @Test fun paragraphsKeepEveryWord() {

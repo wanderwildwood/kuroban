@@ -1,12 +1,19 @@
 package com.wanderwildwood.kuroban.ui
 
 /** One piece of other people's work that ships in the app (or is fetched by it), and its licence. */
-data class LicenceComponent(val name: String, val author: String, val licence: String, val url: String)
+data class LicenceComponent(
+    val name: String,
+    val author: String,
+    val licence: String,
+    val url: String,
+    /** A short line shown on the component's own page, e.g. where a downloaded file comes from. */
+    val note: String? = null,
+)
 
 /** A licence's full text, bundled as a raw resource. [id] is a family id from [licenceFamilies]. */
 data class LicenceText(val id: String, val title: String, val rawResId: Int)
 
-/** A further list on the short page, e.g. files the app downloads and does not carry. */
+/** A further group of components, e.g. files the app downloads and does not carry; they get a row each like the rest, [note] on their pages. */
 data class ComponentGroup(val heading: String, val note: String?, val components: List<LicenceComponent>)
 
 /** Everything the Licences page shows, all text already in the app's own strings. */
@@ -19,14 +26,14 @@ data class LicencesData(
     val extraGroups: List<ComponentGroup> = emptyList(),
 )
 
-/** The words on the two screens, from the app's strings.xml. */
+/** The words on the screens, from the app's strings.xml. */
 data class LicencesLabels(
     val title: String,
     val back: String,
+    /** The words of the app page's link to its source code ("Source code"). */
     val sourceHeading: String,
-    val licenceHeading: String,
-    val builtWithHeading: String,
-    val fullTextsHeading: String,
+    /** "%s needs no licence text here." filled with the licence name, for a licence with no bundled text. */
+    val noText: (String) -> String,
     /** "No browser is installed. The address is %s." filled with the address. */
     val noBrowser: (String) -> String,
 )
@@ -39,8 +46,8 @@ fun licenceFamily(name: String): String? {
     val n = name.lowercase()
     return when {
         "classpath" in n -> "gpl2-cpe"
-        "lgpl" in n -> "lgpl"
-        "gpl" in n -> "gpl"
+        "lgpl" in n || "lesser general public" in n -> "lgpl"
+        "gpl" in n || "general public license" in n || "general public licence" in n -> "gpl"
         "unicode" in n -> "unicode"
         "apache" in n -> "apache"
         "mpl" in n || "mozilla" in n -> "mpl"
@@ -57,6 +64,57 @@ fun licenceFamily(name: String): String? {
 /** Every family a licence string names: "Apache-2.0 and BSD" is apache and bsd. */
 fun licenceFamilies(licence: String): List<String> =
     licence.split(Regex("\\s+(?:and|or|\\+|/)\\s+|,|;")).mapNotNull { licenceFamily(it.trim()) }.distinct()
+
+/** Key of the app's own row and page. */
+const val APP_ROW_KEY = "app"
+
+/** One row of the list: [key] opens a page, [title] is the first line, [subtitle] the second. */
+data class LicenceRow(val key: String, val title: String, val subtitle: String)
+
+/** What one licence page shows. [url] is the source link (app) or website (library); [texts] are full texts to read, empty when [licence] needs none. */
+data class LicencePage(
+    val title: String,
+    val author: String?,
+    val licence: String,
+    val url: String?,
+    val note: String?,
+    val texts: List<LicenceText>,
+)
+
+/** Every component, extra groups included (their group note carried onto each), alphabetical by name. */
+fun allComponents(data: LicencesData): List<LicenceComponent> =
+    (data.components + data.extraGroups.flatMap { g -> g.components.map { it.copy(note = it.note ?: g.note) } })
+        .sortedWith(compareBy<LicenceComponent> { it.name.lowercase() }.thenBy { it.name })
+
+/**
+ * The short licence name for the app's row: the SPDX-style name in [line] ("GPL-3.0-only"), or built from
+ * "GNU General Public License, version 3 only / or later", or the line itself when it names neither.
+ */
+fun appLicenceName(line: String): String {
+    Regex("""\b(?:A|L)?GPL-\d(?:\.\d)?-(?:only|or-later)\b""").find(line)?.let { return it.value }
+    val version = Regex("""[Gg]eneral [Pp]ublic [Ll]icen[cs]e,? version (\d)(?:\.\d)? (only|or later)""").find(line)
+    if (version != null) return "GPL-${version.groupValues[1]}.0-" + if (version.groupValues[2] == "only") "only" else "or-later"
+    return line
+}
+
+/** The list: the app itself first, then one row per component, alphabetical. */
+fun licenceRows(data: LicencesData): List<LicenceRow> =
+    listOf(LicenceRow(APP_ROW_KEY, data.appName, appLicenceName(data.licenceLine))) +
+        allComponents(data).map { LicenceRow("lib:${it.name}", it.name, it.author) }
+
+/** The full texts to show for a licence string, in the order its families are named; none when it needs none. */
+fun textsForLicence(licence: String, texts: List<LicenceText>): List<LicenceText> =
+    licenceFamilies(licence).mapNotNull { id -> texts.firstOrNull { it.id == id } }
+
+/** The page behind the row [key], or null when no row has it. */
+fun licencePage(data: LicencesData, key: String): LicencePage? =
+    if (key == APP_ROW_KEY) {
+        LicencePage(data.appName, null, data.licenceLine, data.sourceUrl, null, textsForLicence(appLicenceName(data.licenceLine), data.texts))
+    } else {
+        allComponents(data).firstOrNull { "lib:${it.name}" == key }?.let {
+            LicencePage(it.name, it.author, it.licence, it.url, it.note, textsForLicence(it.licence, data.texts))
+        }
+    }
 
 /** The texts in the house order (GPL first, then Apache, MPL, MIT, BSD, OFL, ...), one per id. */
 fun orderedTexts(texts: List<LicenceText>): List<LicenceText> =

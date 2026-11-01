@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -45,8 +46,11 @@ fun LicencesLink() {
     if (open) {
         Dialog(onDismissRequest = { open = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-                Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-                    LicencesScreen(rememberLicencesData(), rememberLicencesLabels(), onBack = { open = false }, modifier = Modifier.fillMaxSize())
+                // Side padding as the other full-screen pages have; the list's scrollbar runs out into it.
+                androidx.compose.runtime.CompositionLocalProvider(LocalListBleed provides 20.dp) {
+                    Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 20.dp, vertical = 8.dp)) {
+                        LicencesScreen(rememberLicencesData(), rememberLicencesLabels(), onBack = { open = false }, modifier = Modifier.fillMaxSize())
+                    }
                 }
             }
         }
