@@ -201,3 +201,35 @@ fun licencePageStarts(count: Int, rowsPerPage: Int = LICENCE_ROWS_PER_PAGE): Lis
     val last = (count - rowsPerPage).coerceAtLeast(0)
     return (0 until count step rowsPerPage).map { minOf(it, last) }.distinct()
 }
+
+/**
+ * The first row of each page of a text page whose rows differ in height (title, author, link and
+ * paragraphs): rows are taken in order while they fit the [viewportPx] with [gapPx] between them,
+ * and the next page starts at the first row that did not. No row is cut at the foot and none is
+ * skipped; a row taller than a whole page gets a page to itself (the one case that must cut).
+ * [keepWithNext] says which rows (headings) must not end a page: such a row moves to the next one,
+ * unless it would then leave its page empty. [heights] are measured in px.
+ */
+fun licencePageStartsByHeight(
+    heights: List<Int>,
+    gapPx: Int,
+    viewportPx: Int,
+    keepWithNext: List<Boolean> = emptyList(),
+): List<Int> {
+    val starts = mutableListOf<Int>()
+    var s = 0
+    while (s < heights.size) {
+        starts += s
+        var used = 0
+        var e = s
+        while (e < heights.size) {
+            val add = heights[e] + if (e == s) 0 else gapPx
+            if (e > s && used + add > viewportPx) break
+            used += add
+            e++
+        }
+        if (e < heights.size && e > s + 1 && keepWithNext.getOrNull(e - 1) == true) e--
+        s = e
+    }
+    return starts
+}
