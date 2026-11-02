@@ -113,4 +113,33 @@ class LicencesLogicTest {
     @Test fun paragraphsKeepEveryWord() {
         assertEquals(listOf("One two three", "Four five"), licenceParagraphs("One two\n three\n\n\nFour\r\nfive"))
     }
+
+    @Test fun listPlanMakesEveryPageFourWholeRows() {
+        val plan = licenceListPlan(availablePx = 1003, verticalPadPx = 12, titleLinePx = 40, subtitleLinePx = 34)
+        assertEquals(250, plan.rowPx)
+        assertEquals(1000, plan.listPx)
+        assertEquals(0, plan.listPx % plan.rowPx)
+        assertEquals(2, plan.titleLines)
+    }
+
+    @Test fun listPlanShortensTheNameWhenTheRowIsTight() {
+        // 4 rows of 80 px: 80 - 24 - 34 = 22 px left, less than one title line; still one line, never zero.
+        assertEquals(1, licenceListPlan(320, 12, 40, 34).titleLines)
+        // a very tall row never takes more than two lines
+        assertEquals(2, licenceListPlan(4000, 12, 40, 34).titleLines)
+    }
+
+    @Test fun listPlanSurvivesNoRoom() {
+        val plan = licenceListPlan(0, 12, 40, 34)
+        assertEquals(1, plan.rowPx)
+        assertEquals(4, plan.listPx)
+    }
+
+    @Test fun lastPageEndsOnTheFinalRowAndNoPageIsShort() {
+        assertEquals(listOf(0, 4, 5), licencePageStarts(9))
+        assertEquals(listOf(0, 4), licencePageStarts(8))
+        assertEquals(listOf(0), licencePageStarts(3))
+        assertEquals(emptyList<Int>(), licencePageStarts(0))
+        for (n in 1..40) for (start in licencePageStarts(n)) assertTrue(start + 4 <= n || start == 0)
+    }
 }

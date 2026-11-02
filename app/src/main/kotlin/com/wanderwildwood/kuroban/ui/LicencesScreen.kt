@@ -22,6 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -58,10 +62,32 @@ fun LicencesScreen(
         return
     }
     LicencesFrame(modifier, title = if (showTitle) labels.title else null, back = if (showBackButton) labels.back else null, onBack = onBack) { pageModifier ->
-        PagedColumn(modifier = pageModifier, state = listState) {
-            licenceRows(data).forEach { r -> item(key = r.key) { LicenceRowView(r) { open = r.key } } }
+        // MMD's list turns a fixed FOUR ROWS per page whatever their heights, so the rows are made one
+        // height and the list exactly four of them tall: every page is whole rows, the last ends flush.
+        BoxWithConstraints(pageModifier) {
+            val density = LocalDensity.current
+            val body = MaterialTheme.typography.bodyMedium
+            val small = MaterialTheme.typography.bodySmall
+            val plan = with(density) {
+                licenceListPlan(
+                    availablePx = maxHeight.roundToPx(),
+                    verticalPadPx = ROW_PAD.roundToPx(),
+                    titleLinePx = lineHeightPx(body),
+                    subtitleLinePx = lineHeightPx(small),
+                )
+            }
+            val rowHeight = with(density) { plan.rowPx.toDp() }
+            PagedColumn(modifier = Modifier.fillMaxWidth().height(with(density) { plan.listPx.toDp() }), state = listState) {
+                licenceRows(data).forEach { r -> item(key = r.key) { LicenceRowView(r, rowHeight, plan.titleLines) { open = r.key } } }
+            }
         }
     }
+}
+
+/** One text line's height in px: the style's line height, or 1.3 times its size where it has none. */
+private fun Density.lineHeightPx(style: TextStyle): Int {
+    val lh = if (style.lineHeight.isSp) style.lineHeight.toPx() else style.fontSize.toPx() * 1.3f
+    return lh.toInt().coerceAtLeast(1)
 }
 
 /**
@@ -86,19 +112,23 @@ private fun LicencesFrame(modifier: Modifier, title: String?, back: String?, onB
     }
 }
 
-/** One list row: the name, and under it the author (or, for the app, its licence); 48 dp at least. */
+/**
+ * One list row: the name (at most [titleLines] lines, then an ellipsis; the library's page shows it
+ * in full), and under it the author (or, for the app, its licence) on one line. Exactly [height]
+ * tall, so a page of the list is whole rows.
+ */
 @Composable
-private fun LicenceRowView(row: LicenceRow, onClick: () -> Unit) {
+private fun LicenceRowView(row: LicenceRow, height: Dp, titleLines: Int, onClick: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .height(height)
             .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+            .padding(vertical = ROW_PAD),
         verticalArrangement = Arrangement.Center,
     ) {
-        TextMMD(text = row.title, style = MaterialTheme.typography.bodyMedium)
-        if (row.subtitle.isNotEmpty()) TextMMD(text = row.subtitle, style = MaterialTheme.typography.bodySmall)
+        TextMMD(text = row.title, style = MaterialTheme.typography.bodyMedium, maxLines = titleLines, overflow = TextOverflow.Ellipsis)
+        if (row.subtitle.isNotEmpty()) TextMMD(text = row.subtitle, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -179,3 +209,6 @@ private fun LicencesLinkRow(text: String, underline: Boolean = true, onClick: ()
 /** What a title line and the Back button with its gap take, which the paged area gives up. */
 private val TITLE_LINE: Dp = 28.dp
 private val BACK_ROOM: Dp = 60.dp
+
+/** Padding above and below a list row's text. */
+private val ROW_PAD: Dp = 6.dp

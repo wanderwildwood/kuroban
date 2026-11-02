@@ -155,3 +155,49 @@ fun licenceParagraphs(text: String): List<String> =
         .split(Regex("\n[ \t]*\n"))
         .map { block -> block.lines().joinToString(" ") { it.trim() }.trim() }
         .filter { it.isNotEmpty() }
+
+/** How many rows MMD's list turns per page: `LazyColumnMMD`'s `scrollStep`, which `PagedColumn` leaves at its default. */
+const val LICENCE_ROWS_PER_PAGE = 4
+
+/**
+ * How the Licences list is laid out so that a page is exactly [LICENCE_ROWS_PER_PAGE] whole rows.
+ * MMD's list moves a fixed number of ROWS per swipe or chevron press, whatever their heights, so
+ * with rows of differing heights a page ends mid-row (or leaves room for part of the next one), and
+ * the last page, which the list shifts back to end at the final row, starts mid-row. If every row
+ * is the same height and the list is exactly that many rows tall, every page is whole rows and the
+ * last ends flush. [rowPx] is that height, [listPx] the list's height (leftover pixels are given up,
+ * never shown as a sliver), [titleLines] how many lines the row's name may take (the rest is
+ * ellipsised; the library's page shows it in full).
+ */
+data class LicenceListPlan(val rowPx: Int, val listPx: Int, val titleLines: Int)
+
+/**
+ * [availablePx] is the height the list has; [verticalPadPx] the padding above and below a row's
+ * text, [titleLinePx] and [subtitleLinePx] the height of one line of each. The name gets as many
+ * lines as fit beside the one subtitle line, from one to [maxTitleLines].
+ */
+fun licenceListPlan(
+    availablePx: Int,
+    verticalPadPx: Int,
+    titleLinePx: Int,
+    subtitleLinePx: Int,
+    rowsPerPage: Int = LICENCE_ROWS_PER_PAGE,
+    maxTitleLines: Int = 2,
+): LicenceListPlan {
+    val row = (availablePx / rowsPerPage).coerceAtLeast(1)
+    val room = row - 2 * verticalPadPx - subtitleLinePx
+    val lines = (room / titleLinePx.coerceAtLeast(1)).coerceIn(1, maxTitleLines)
+    return LicenceListPlan(rowPx = row, listPx = row * rowsPerPage, titleLines = lines)
+}
+
+/**
+ * The first row of each page when a list of [count] rows is turned [rowsPerPage] at a time, the way
+ * MMD's list does: the start moves on by [rowsPerPage] and is held back so that the last page still
+ * ends at the final row. With equal rows this is what the user sees; the tests use it to show that
+ * every page holds [rowsPerPage] rows (or all of them, if there are fewer).
+ */
+fun licencePageStarts(count: Int, rowsPerPage: Int = LICENCE_ROWS_PER_PAGE): List<Int> {
+    if (count <= 0) return emptyList()
+    val last = (count - rowsPerPage).coerceAtLeast(0)
+    return (0 until count step rowsPerPage).map { minOf(it, last) }.distinct()
+}
