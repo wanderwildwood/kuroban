@@ -1,6 +1,11 @@
 package com.wanderwildwood.kuroban.ui
 
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +41,8 @@ import com.mudita.mmd.components.text.TextMMD
  * An `i` at the right of the Settings top bar opens it. Inside, in this order and nothing else:
  * the name and version, the app's own sections (what it collects or sends where that is worth a
  * stranger's attention, the licence named in full, anything bundled), the Licences row (the
- * shared Licences screen, in the same dialog), further links, the source address, the llama.
+ * shared Licences screen, in the same dialog), further links, "Write to email@wanderthe.dev", the
+ * source address, the llama.
  * Under it ONE button, "Close". System Back closes the dialog; on the Licences page it returns to
  * the About first.
  *
@@ -46,6 +52,9 @@ import com.mudita.mmd.components.text.TextMMD
 
 const val ABOUT_WEBSITE_URL = "https://wanderthe.dev"
 const val ABOUT_DONATE_URL = "https://square.link/u/AGu8oT10"
+
+/** The one contact address, the same in every app, its PRIVACY.md and its in-app privacy text. */
+const val ABOUT_CONTACT_EMAIL = "email@wanderthe.dev"
 
 /** One block of the app's own words: a bold heading (or none) and its text. */
 data class AboutSection(val heading: String?, val body: String)
@@ -64,12 +73,18 @@ data class AboutData(
     val links: List<AboutLinkData> = emptyList(),
 )
 
-/** The words the dialog itself needs. [noBrowser] turns a shown address into the plain sentence. */
+/**
+ * The words the dialog itself needs. [noBrowser] turns a shown address into the plain sentence.
+ * [writeTo] makes the contact row ("Write to %1$s"); [noMailApp] is what is said, address and all,
+ * when the phone has no email app to take it ("No email app is installed. The address is %1$s.").
+ */
 data class AboutLabels(
     val close: String,
     val licences: String,
     val feedTheLlamas: String,
     val noBrowser: (String) -> String,
+    val writeTo: (String) -> String,
+    val noMailApp: (String) -> String,
 )
 
 /** The rows, top to bottom. */
@@ -78,18 +93,27 @@ sealed interface AboutRow {
     data class Section(val section: AboutSection) : AboutRow
     object Licences : AboutRow
     data class Link(val label: String, val url: String) : AboutRow
+    data class Contact(val address: String) : AboutRow
     object Llama : AboutRow
 }
 
 /** The address as shown to a person: no scheme, no trailing slash. */
 fun aboutAddress(url: String): String = url.removePrefix("https://").trimEnd('/')
 
-/** Title, sections, the Licences row, further links, the source, the llama: always this order. */
+/**
+ * A mailto: address with the subject filled in (the app's name and version, so a message says which
+ * app it is about). Spaces are %20, not +, which mail apps would show as a plus sign.
+ */
+fun aboutMailUri(address: String, subject: String): String =
+    "mailto:$address?subject=" + java.net.URLEncoder.encode(subject, "UTF-8").replace("+", "%20")
+
+/** Title, sections, the Licences row, further links, the contact, the source, the llama: always this order. */
 fun aboutRows(data: AboutData): List<AboutRow> = buildList {
     add(AboutRow.Title(data.title))
     data.sections.forEach { add(AboutRow.Section(it)) }
     add(AboutRow.Licences)
     data.links.forEach { add(AboutRow.Link(it.label, it.url)) }
+    add(AboutRow.Contact(ABOUT_CONTACT_EMAIL))
     add(AboutRow.Link(aboutAddress(data.sourceUrl), data.sourceUrl))
     add(AboutRow.Llama)
 }
@@ -133,6 +157,12 @@ fun HouseAboutDialog(
                             val context = LocalContext.current
                             AboutLine(row.label) { openLink(context, row.url, labels.noBrowser(aboutAddress(row.url))) }
                         }
+                        is AboutRow.Contact -> {
+                            val context = LocalContext.current
+                            AboutLine(labels.writeTo(row.address)) {
+                                openMail(context, row.address, data.title, labels.noMailApp(row.address))
+                            }
+                        }
                         AboutRow.Llama -> AboutLlama(labels, llamaRes)
                     }
                 }
@@ -150,6 +180,23 @@ private fun AboutPart(section: AboutSection) {
             TextMMD(text = section.heading, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
         }
         TextMMD(text = section.body, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+/**
+ * Opens the phone's email app on a new message to [address], the subject already filled in. With no
+ * email app it says so, address and all (the row shows the address in full too, so it can be copied
+ * down by hand). No <queries> entry is needed: nothing is looked up first, the press is just caught.
+ */
+fun openMail(context: Context, address: String, subject: String, noMailApp: String) {
+    val intent = Intent(Intent.ACTION_SENDTO, Uri.parse(aboutMailUri(address, subject)))
+        .putExtra(Intent.EXTRA_SUBJECT, subject)
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, noMailApp, Toast.LENGTH_LONG).show()
+    } catch (_: SecurityException) {
+        Toast.makeText(context, noMailApp, Toast.LENGTH_LONG).show()
     }
 }
 

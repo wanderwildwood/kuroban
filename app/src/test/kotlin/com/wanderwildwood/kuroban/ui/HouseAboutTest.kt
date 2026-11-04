@@ -14,13 +14,24 @@ class HouseAboutTest {
 
     @Test fun rowsAreInStyleOrder() {
         val rows = aboutRows(data)
-        assertEquals(7, rows.size)
+        assertEquals(8, rows.size)
         assertTrue(rows[0] is AboutRow.Title)
         assertTrue(rows[1] is AboutRow.Section && rows[2] is AboutRow.Section)
         assertEquals(AboutRow.Licences, rows[3])
         assertEquals(AboutRow.Link("example.org/work", "https://example.org/work"), rows[4])
-        assertEquals(AboutRow.Link("github.com/wanderwildwood/sample", "https://github.com/wanderwildwood/sample"), rows[5])
+        assertEquals(AboutRow.Contact("email@wanderthe.dev"), rows[5])
+        assertEquals(AboutRow.Link("github.com/wanderwildwood/sample", "https://github.com/wanderwildwood/sample"), rows[6])
         assertEquals(AboutRow.Llama, rows.last())
+    }
+
+    @Test fun contactIsTheOneAddress() {
+        assertEquals("email@wanderthe.dev", ABOUT_CONTACT_EMAIL)
+        assertEquals(1, aboutRows(data.copy(links = emptyList())).count { it is AboutRow.Contact })
+    }
+
+    @Test fun mailUriCarriesTheSubject() {
+        assertEquals("mailto:email@wanderthe.dev?subject=Cycle%200.3.6", aboutMailUri(ABOUT_CONTACT_EMAIL, "Cycle 0.3.6"))
+        assertEquals("mailto:a@example.org?subject=Dream%20Log%20%26%20more", aboutMailUri("a@example.org", "Dream Log & more"))
     }
 
     @Test fun addressDropsSchemeAndSlash() {
