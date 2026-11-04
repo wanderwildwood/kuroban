@@ -15,18 +15,18 @@ already ships with, with GNU Go bundled as the engine.
 | | |
 |---|---|
 | ![Setting up a game](screenshots/1-new-game.png) | ![A game in progress](screenshots/2-playing.png) |
-| ![A hint offered as a preview stone](screenshots/3-hint.png) | ![About: privacy, terms and licences](screenshots/4-about.png) |
+| ![A hint offered as a preview stone](screenshots/3-hint.png) | ![About: privacy, terms and licenses](screenshots/4-about.png) |
 
 ## What it does
 
 - 9x9 board, only. The engine handles any size and the board would scale, but 19x19 on
   a 360dp-wide panel gives 18dp touch targets, which is not a game anyone enjoys playing.
-- Against GNU Go at two strengths, playing either colour, or two players on one device,
+- Against GNU Go at two strengths, playing either color, or two players on one device,
   pass-and-play.
 - Handicap of 2 to 5 stones. A difficulty setting cannot make an engine a fair contest for a
   beginner; handicap can.
 - Set up a position by hand and play it out. Put black and white stones anywhere, say which
-  colour plays, and the game carries on from there with everything else unchanged - Hint,
+  color plays, and the game carries on from there with everything else unchanged - Hint,
   taking a move back, and counting at the end. It is the plainest way to work through a
   problem out of a book, which is how people studied Go for a thousand years before an app
   offered to mark their answers for them.
@@ -52,7 +52,7 @@ just the best thing to hand somebody who has this app and no idea what to do wit
 
 ## Why only two difficulty settings
 
-Because on a 9x9 board the engine only has two. Measured by self-play with colours
+Because on a 9x9 board the engine only has two. Measured by self-play with colors
 alternating: levels 1 and 3 are indistinguishable (9-7 over 16 games), and so are levels 5
 and 10 (12-12 over 24 games, mean margin a tenth of a point). The only real step is between
 3 and 5 - and level 10 costs ten times the thinking time of level 5, 3.4s against 0.33s per
@@ -114,7 +114,7 @@ For updates without doing this by hand, add this repository to
 It will offer each new release as it appears. **The application id is settled** — updates
 install over what you have, keeping your settings and anything the app has stored.
 
-## Licence
+## License
 
 GPL-3.0-only. See [LICENSE](LICENSE).
 
@@ -122,4 +122,4 @@ This app bundles [GNU Go](https://www.gnu.org/software/gnugo/), Copyright 1999-2
 Software Foundation, Inc., released under the GPL version 3 or later. Bundling it makes this
 whole work GPL too; version 3 is the version taken here. GNU Go's complete corresponding
 source is in `engine/gnugo-3.8.tar.gz`, unmodified, along with the script that builds it. In the app,
-About, Licences lists Go and then every library it is built with (GNU Go included), one row each; a row opens the author, website and full licence text, and Go's own page carries the GPL and the source address.
+About, Licenses lists Go and then every library it is built with (GNU Go included), one row each; a row opens the author, website and full license text, and Go's own page carries the GPL and the source address.
