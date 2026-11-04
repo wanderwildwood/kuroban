@@ -29,7 +29,7 @@ import com.mudita.mmd.components.text.TextMMD
  *
  * It is MMD's own button, not a new look. ButtonDefaultsMMD already gives 8 dp corners and a 2 dp
  * black border and takes the ripple away; this only raises the height to the 48 dp touch rule,
- * picks filled (on) or outlined (off), and sets the words in bodySmall (15 sp), one line. No
+ * picks filled (on) or outlined (off), and sets the words in bodySmall (16 sp, houseTypography), one line. No
  * strings live here: every label comes from the caller.
  */
 
