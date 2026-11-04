@@ -53,6 +53,24 @@ class LicencesLogicTest {
         assertTrue(licencesProblems(good.copy(components = listOf(c("a", "MIT"), c("a", "MIT")))).any { "twice" in it })
     }
 
+    @Test fun aComponentWithItsOwnTextNeedsNoBundledText() {
+        val own = LicenceComponent("Guava", "Google", "Apache-2.0", "https://github.com/google/guava", texts = listOf(LicenceText("apache", "Apache License 2.0", 0, "Apache License\n\nVersion 2.0")))
+        val d = LicencesData("App", "https://github.com/x/y", "GPL-3.0-only", listOf(own), listOf(t("gpl")))
+        assertTrue(licencesProblems(d).isEmpty())
+        assertEquals("Apache License\n\nVersion 2.0", licencePage(d, "lib:Guava")!!.texts.single().content)
+        // and its family text, bundled anyway, is then unused
+        assertEquals(listOf("text apache is not used by anything"), licencesProblems(d.copy(texts = listOf(t("gpl"), t("apache")))))
+    }
+
+    @Test fun noLicenceAnUnplacedLicenceAndAnEmptyLinkAreCaught() {
+        val d = LicencesData("App", "https://github.com/x/y", "GPL-3.0-only", listOf(c("a", ""), c("b", "Bouncy Castle Licence")), listOf(t("gpl")))
+        assertEquals(listOf("a: no licence", "b: no text for licence Bouncy Castle Licence"), licencesProblems(d))
+        val noLink = LicenceComponent("Lato", "Łukasz Dziedzic", "OFL-1.1", "", texts = listOf(LicenceText("ofl", "OFL", 0, "x")))
+        assertTrue(licencesProblems(d.copy(components = listOf(noLink))).isEmpty())
+        assertEquals(null, licencePage(d.copy(components = listOf(noLink)), "lib:Lato")!!.url)
+        assertEquals(listOf("x: link is not https"), licencesProblems(d.copy(components = listOf(LicenceComponent("x", "y", "CC0-1.0", "http://x.org")))))
+    }
+
     private fun data() = LicencesData(
         "App", "https://github.com/x/y", "GPL-3.0-only, holder someone",
         listOf(c("Zed", "MIT"), c("apache lib", "Apache-2.0"), c("Both", "Apache-2.0 and BSD"), c("Font", "CC BY 4.0")),

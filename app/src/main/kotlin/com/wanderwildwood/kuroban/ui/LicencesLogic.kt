@@ -8,10 +8,19 @@ data class LicenceComponent(
     val url: String,
     /** A short line shown on the component's own page, e.g. where a downloaded file comes from. */
     val note: String? = null,
+    /**
+     * Its own full licence text(s), from the build-time list (`licenceComponentsFromJson`). When
+     * there are any they are shown instead of the app's bundled text for the licence's family.
+     */
+    val texts: List<LicenceText> = emptyList(),
 )
 
-/** A licence's full text, bundled as a raw resource. [id] is a family id from [licenceFamilies]. */
-data class LicenceText(val id: String, val title: String, val rawResId: Int)
+/**
+ * A licence's full text: bundled as a raw resource ([rawResId]), or carried as [content] (the
+ * build-time list holds the texts itself; [rawResId] is 0 then). [id] is a family id from
+ * [licenceFamilies] where the text belongs to one.
+ */
+data class LicenceText(val id: String, val title: String, val rawResId: Int, val content: String? = null)
 
 /** A further group of components, e.g. files the app downloads and does not carry; they get a row each like the rest, [note] on their pages. */
 data class ComponentGroup(val heading: String, val note: String?, val components: List<LicenceComponent>)
@@ -112,7 +121,7 @@ fun licencePage(data: LicencesData, key: String): LicencePage? =
         LicencePage(data.appName, null, data.licenceLine, data.sourceUrl, null, textsForLicence(appLicenceName(data.licenceLine), data.texts))
     } else {
         allComponents(data).firstOrNull { "lib:${it.name}" == key }?.let {
-            LicencePage(it.name, it.author, it.licence, it.url, it.note, textsForLicence(it.licence, data.texts))
+            LicencePage(it.name, it.author, it.licence, it.url.ifEmpty { null }, it.note, it.texts.ifEmpty { textsForLicence(it.licence, data.texts) })
         }
     }
 
@@ -127,20 +136,29 @@ fun groupByLicence(components: List<LicenceComponent>): Map<String, List<Licence
         .groupBy({ it.first }, { it.second })
         .toSortedMap(compareBy { licenceFamilies.indexOf(it).let { i -> if (i < 0) Int.MAX_VALUE else i } })
 
+/** Licence families whose page says in one line that no text is needed (attribution or none at all). */
+val licenceFamiliesWithoutText: Set<String> = setOf("cc-by", "cc0", "pd")
+
 /**
  * What is wrong with the data, as plain sentences; empty when it is fine. For the app's own test:
- * a licence with a full text to show but none bundled, a bundled text nothing uses, a repeated name.
+ * a component with no licence, a licence with a full text to show but none bundled or carried, a
+ * licence the list cannot place in a family and has no text for, a bundled text nothing uses, a
+ * repeated name, a link that is not https (a component may have no link at all).
  */
 fun licencesProblems(data: LicencesData): List<String> {
     val problems = mutableListOf<String>()
     val all = data.components + data.extraGroups.flatMap { it.components }
-    val used = (all.flatMap { licenceFamilies(it.licence) } + licenceFamilies(data.licenceLine)).toSet()
+    val needFamily = all.filter { it.texts.isEmpty() }
+    val used = (needFamily.flatMap { licenceFamilies(it.licence) } + licenceFamilies(data.licenceLine)).toSet()
     val have = data.texts.map { it.id }.toSet()
-    (used - have - setOf("cc-by", "cc0", "pd")).forEach { problems += "no full text for $it" }
+    all.filter { it.licence.isBlank() }.forEach { problems += "${it.name}: no licence" }
+    (used - have - licenceFamiliesWithoutText).forEach { problems += "no full text for $it" }
+    needFamily.filter { it.licence.isNotBlank() && licenceFamilies(it.licence).isEmpty() }
+        .forEach { problems += "${it.name}: no text for licence ${it.licence}" }
     (have - used).forEach { problems += "text $it is not used by anything" }
     if (data.texts.map { it.id }.size != have.size) problems += "a licence text is listed twice"
     if (all.map { it.name }.size != all.map { it.name }.toSet().size) problems += "a component is listed twice"
-    all.filterNot { it.url.startsWith("https://") }.forEach { problems += "${it.name}: link is not https" }
+    all.filter { it.url.isNotEmpty() && !it.url.startsWith("https://") }.forEach { problems += "${it.name}: link is not https" }
     if (!data.sourceUrl.startsWith("https://")) problems += "source link is not https"
     return problems
 }

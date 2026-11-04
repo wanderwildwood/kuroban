@@ -1,0 +1,8 @@
+{
+  "uniqueId": "lato-font",
+  "name": "Lato typeface",
+  "description": "The typeface the screens are set in, supplied with Mudita's MMD library.",
+  "developers": [{ "name": "Łukasz Dziedzic" }],
+  "website": "https://www.latofonts.com/",
+  "licenses": ["OFL-1.1"]
+}

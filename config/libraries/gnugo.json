@@ -1,0 +1,9 @@
+{
+  "uniqueId": "gnugo",
+  "name": "GNU Go 3.8, the opponent",
+  "description": "The engine that plays against you: GNU Go 3.8, unmodified, built for the phone as native code (libgnugo.so) from the upstream tarball in engine/.",
+  "developers": [{ "name": "Free Software Foundation" }],
+  "organization": { "name": "Free Software Foundation", "url": "https://www.fsf.org" },
+  "website": "https://www.gnu.org/software/gnugo/",
+  "licenses": ["GPL-3.0-or-later"]
+}
