@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mudita.mmd.ThemeMMD
 import com.wanderwildwood.kuroban.game.GameViewModel
+import com.wanderwildwood.kuroban.ui.ArmedScope
 import com.wanderwildwood.kuroban.ui.GameScreen
 import com.wanderwildwood.kuroban.ui.NewGameScreen
 import com.wanderwildwood.kuroban.ui.monochrome
@@ -18,7 +19,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ThemeMMD(colorScheme = monochrome) {
-                Kuroban()
+                ArmedScope { Kuroban() }
             }
         }
     }

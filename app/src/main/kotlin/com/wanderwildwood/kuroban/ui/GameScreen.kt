@@ -19,7 +19,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +39,6 @@ import com.wanderwildwood.kuroban.game.Outcome
 import com.wanderwildwood.kuroban.game.Phase
 import com.wanderwildwood.kuroban.game.Point
 import com.wanderwildwood.kuroban.game.Stone
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -454,8 +452,9 @@ private val TIGHT = androidx.compose.foundation.layout.PaddingValues(horizontal 
  *
  * Both of the things in it throw away the game being played, and the back button is an
  * easy thing to press by accident, so neither happens on one tap: the button says what it
- * will do, and asks. It forgets being asked after a few seconds, so a menu left open on a
- * phone in a pocket is not a game waiting to be resigned.
+ * will do, and asks. It stays asking, with no timer, until the next other touch, Back or
+ * leaving: the screen going off in a pocket forgets it, so a menu left open there is not a
+ * game waiting to be resigned.
  *
  * The way out is first and is the solid one. Opening this dialog by mistake is the most
  * likely reason to be looking at it.
@@ -469,31 +468,37 @@ private fun MenuDialog(
     onDismiss: () -> Unit,
 ) {
     EInkDialog(onDismiss = onDismiss) {
-        TextMMD(text = stringResource(R.string.menu_title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.height(18.dp))
-        ButtonMMD(
-            onClick = onDismiss,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-        ) { TextMMD(text = if (settingUp) stringResource(R.string.menu_back_to_board) else stringResource(R.string.menu_back_to_game), style = MaterialTheme.typography.bodySmall) }
-        Spacer(Modifier.height(10.dp))
-        ConfirmingButton(
-            label = stringResource(R.string.game_new_game),
-            armedLabel = if (settingUp) {
-                stringResource(R.string.menu_throw_away_position_armed)
-            } else {
-                stringResource(R.string.menu_give_up_game_armed)
-            },
-            onConfirmed = onNewGame,
-        )
-        Spacer(Modifier.height(10.dp))
-        ConfirmingButton(
-            label = stringResource(R.string.menu_resign),
-            armedLabel = stringResource(R.string.menu_resign_armed),
-            enabled = canResign,
-            onConfirmed = onResign,
-        )
+        // The dialog is its own window, so its armed buttons need their own scope to hear
+        // a tap elsewhere in it.
+        ArmedScope {
+            Column {
+                TextMMD(text = stringResource(R.string.menu_title), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(18.dp))
+                ButtonMMD(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                ) { TextMMD(text = if (settingUp) stringResource(R.string.menu_back_to_board) else stringResource(R.string.menu_back_to_game), style = MaterialTheme.typography.bodySmall) }
+                Spacer(Modifier.height(10.dp))
+                ConfirmingButton(
+                    label = stringResource(R.string.game_new_game),
+                    armedLabel = if (settingUp) {
+                        stringResource(R.string.menu_throw_away_position_armed)
+                    } else {
+                        stringResource(R.string.menu_give_up_game_armed)
+                    },
+                    onConfirmed = onNewGame,
+                )
+                Spacer(Modifier.height(10.dp))
+                ConfirmingButton(
+                    label = stringResource(R.string.menu_resign),
+                    armedLabel = stringResource(R.string.menu_resign_armed),
+                    enabled = canResign,
+                    onConfirmed = onResign,
+                )
+            }
+        }
     }
 }
 
@@ -510,14 +515,7 @@ private fun ConfirmingButton(
     onConfirmed: () -> Unit,
     enabled: Boolean = true,
 ) {
-    var armed by remember { mutableStateOf(false) }
-
-    LaunchedEffect(armed) {
-        if (armed) {
-            delay(6000)
-            armed = false
-        }
-    }
+    var armed by rememberArmedFlag()
 
     OutlinedButtonMMD(
         onClick = { if (armed) onConfirmed() else armed = true },
