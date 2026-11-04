@@ -30,7 +30,7 @@ One file, in the app's own private storage, holding the game currently in progre
 files/game-in-progress.txt
 ```
 
-It contains a format version, your four game settings (opponent, difficulty, your colour,
+It contains a format version, your four game settings (opponent, difficulty, your color,
 handicap), and the list of moves played so far — for example `E5 D3 pass F4`. It exists so
 that turning your phone off in the middle of a game does not lose the game. It is deleted
 when the game is finished, resigned, or left.
