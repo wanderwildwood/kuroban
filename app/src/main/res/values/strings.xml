@@ -115,10 +115,15 @@
 
     <!-- %1$s is the version number -->
     <string name="about_version">Go %1$s</string>
+    <string name="about_what">A game of Go on a 9×9 board, against GNU Go or the person opposite, with handicaps, a hint when you want one, and the board counted at the end. Set up a position from a book and play it out.</string>
+    <string name="about_open_drawer">Open %1$s</string>
+    <string name="about_close_drawer">Close %1$s</string>
+    <string name="about_contact_head">Contact</string>
+    <string name="about_links_head">Links</string>
     <string name="about_licence">GNU General Public License v3</string>
     <string name="about_gnugo">GNU Go 3.8 — © 1999–2009 Free Software Foundation, unmodified, same license</string>
     <!-- The book's archive.org address is shown on the line after this one -->
-    <string name="about_little_lions">New to the 9x9 board? ‘81 Little Lions’ by Immanuel deVillers:</string>
+    <string name="about_little_lions">‘81 Little Lions’ by Immanuel deVillers, a free book for the 9x9 board</string>
     <string name="about_privacy_head">Privacy</string>
     <string name="about_privacy">Go collects nothing, sends nothing and asks for no permissions. It has no network access at all. The only thing it stores is the game in progress, in its own private storage on this phone, deleted when the game ends. There are no ads, no analytics and no tracking.</string>
     <string name="about_terms_head">Terms</string>
