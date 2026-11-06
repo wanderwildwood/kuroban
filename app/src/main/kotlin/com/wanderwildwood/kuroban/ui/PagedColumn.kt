@@ -247,7 +247,9 @@ internal fun forward(page: PageView): Turn {
         ?: return Turn.To(page.rows.last().index + 1)
     // The row that does not fit is the one the page opens with: it is taller than a page, so the
     // next page is the next part of it.
-    if (cut.top <= 0) return Turn.By(minOf(page.height, cut.bottom - page.height).coerceAtLeast(1))
+    // "Opens with", not "starts at the top": a list with padding above its first row has that
+    // row start below 0, and it still must be read through.
+    if (cut.index == page.rows.first().index) return Turn.By(minOf(page.height, cut.bottom - page.height).coerceAtLeast(1))
     return Turn.To(cut.index)
 }
 
