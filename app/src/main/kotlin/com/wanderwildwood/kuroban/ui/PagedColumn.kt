@@ -174,7 +174,10 @@ fun PagedColumn(
                 userScrollEnabled = false,
             ) {
                 content()
-                item(key = TAIL, contentType = TAIL) { Spacer(Modifier.height(tail)) }
+                // The tail has no key of its own (8 Nov 2026): a list keeps its place on the key of its
+                // first row, so a list that opened empty (its rows still loading) and so on the tail alone
+                // would stay on the tail when the rows came in above it, a blank page. Known by its type.
+                item(contentType = TAIL) { Spacer(Modifier.height(tail)) }
             }
         }
         if (pages && isScrollbarVisible) {
@@ -266,7 +269,7 @@ internal fun backSnap(page: PageView): Int? {
 }
 
 private fun LazyListLayoutInfo.view(): PageView {
-    val items = visibleItemsInfo.filter { it.key != TAIL }
+    val items = visibleItemsInfo.filter { it.contentType != TAIL }
     val rows = items.map { RowSpan(it.index, it.offset - viewportStartOffset, it.offset - viewportStartOffset + it.size) }
     val count = (totalItemsCount - 1).coerceAtLeast(0)
     return PageView(rows, viewportSize.height - afterContentPadding, count)
