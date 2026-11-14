@@ -44,6 +44,7 @@ fun EInkDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         val view = LocalView.current
+        DarkWindow()
         SideEffect {
             (view.parent as? DialogWindowProvider)?.window?.let { window ->
                 window.setDimAmount(0f)
