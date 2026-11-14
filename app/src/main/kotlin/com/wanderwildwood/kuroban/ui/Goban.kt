@@ -52,7 +52,8 @@ fun Goban(
     // The tap handler below lives as long as the board keeps its size, so it calls whatever
     // onTap is newest: leaving set-up for play hands it a new one at the same size.
     val currentOnTap by rememberUpdatedState(onTap)
-    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+    // Dark mode leaves the board alone: turned, the black stones would be the white ones.
+    BoxWithConstraints(modifier = modifier.keepColors(), contentAlignment = Alignment.Center) {
         val side = minOf(maxWidth, maxHeight)
         val density = LocalDensity.current
         val sidePx = with(density) { side.toPx() }

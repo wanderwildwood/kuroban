@@ -21,7 +21,7 @@ import com.wanderwildwood.kuroban.game.Stone
 fun StoneGlyph(stone: Stone, size: Dp = 13.dp) {
     val ink = MaterialTheme.colorScheme.onSurface
     val paper = MaterialTheme.colorScheme.surface
-    Canvas(modifier = Modifier.size(size)) {
+    Canvas(modifier = Modifier.size(size).keepColors()) { // a black stone stays black in dark mode
         val rim = 1.5.dp.toPx()
         val radius = this.size.minDimension / 2f - rim / 2f
         if (stone == Stone.BLACK) {
