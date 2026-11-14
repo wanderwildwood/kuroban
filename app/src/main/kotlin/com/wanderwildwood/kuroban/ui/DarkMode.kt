@@ -123,6 +123,7 @@ object DarkMode {
         on = dark
         windows.keys.toList().forEach { apply(it) }
         others().forEach { layer(it, dark) }
+        kept.keys.toList().forEach { keepNow(it) }
         if (dark) sweep()
     }
 
@@ -229,8 +230,18 @@ object DarkMode {
     /** For a window the app makes itself (a dialog, a popup): dark from its first frame. */
     fun window(anyViewInIt: View) = layer(anyViewInIt.rootView, on)
 
-    /** A view that keeps its own colours in dark mode: a picture, a map, a code to be scanned. */
+    /**
+     * A view that keeps its own colours in dark mode: a picture, a map, a code to be scanned.
+     * Call it once, when the view is made; it follows the switch from then on.
+     */
     fun keep(view: View) {
+        kept[view] = true
+        keepNow(view)
+    }
+
+    private val kept = WeakHashMap<View, Boolean>()
+
+    private fun keepNow(view: View) {
         if (on) view.setLayerType(View.LAYER_TYPE_HARDWARE, inverting) else view.setLayerType(View.LAYER_TYPE_NONE, null)
     }
 
