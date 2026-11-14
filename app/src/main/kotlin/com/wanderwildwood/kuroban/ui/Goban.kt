@@ -1,5 +1,6 @@
 package com.wanderwildwood.kuroban.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -53,7 +54,7 @@ fun Goban(
     // onTap is newest: leaving set-up for play hands it a new one at the same size.
     val currentOnTap by rememberUpdatedState(onTap)
     // Dark mode leaves the board alone: turned, the black stones would be the white ones.
-    BoxWithConstraints(modifier = modifier.keepColors(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier = modifier.keepColors().background(paper), contentAlignment = Alignment.Center) {
         val side = minOf(maxWidth, maxHeight)
         val density = LocalDensity.current
         val sidePx = with(density) { side.toPx() }

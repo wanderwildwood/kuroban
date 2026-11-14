@@ -1,5 +1,6 @@
 package com.wanderwildwood.kuroban.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -228,7 +229,7 @@ private fun GobanMark(size: androidx.compose.ui.unit.Dp = 132.dp) {
     val paper = MaterialTheme.colorScheme.surface
     val lines = 5
 
-    Canvas(modifier = Modifier.size(size).keepColors()) { // its black stones stay black in dark mode
+    Canvas(modifier = Modifier.size(size).keepColors().background(paper)) { // its black stones stay black in dark mode
         val cell = this.size.minDimension / lines
         val origin = cell / 2f
         val span = (lines - 1) * cell
