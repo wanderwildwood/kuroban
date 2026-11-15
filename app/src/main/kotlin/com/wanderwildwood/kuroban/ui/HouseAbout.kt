@@ -5,13 +5,16 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -19,31 +22,38 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.mudita.mmd.components.text.TextMMD
 
 /*
@@ -52,20 +62,27 @@ import com.mudita.mmd.components.text.TextMMD
  *
  * An `i` at the right of the Settings top bar opens it. The name and version head the dialog.
  * Under them, in this order (4 Nov 2026): the short description (the app's unheaded sections
- * before any heading, plain text), the source address, the llama, then the drawers: the app's own
- * headed sections, Licenses (the app's line and one small drawer per library, its license text
- * inline), Links (if any), Contact (only when no app section gives the address). A drawer is its
- * heading alone, no + or − mark, pressed anywhere to open or close it; all start closed and
- * several may be open. In the drawer whose words give the address, that paragraph IS the contact
- * row, pressed to write; no separate "Write to" line. Reading text is labelSmall, never under
- * 16 sp (15 Nov 2026: held there even in a theme without the house type scale), the name
- * bodyLarge (20 sp). Under the list ONE button, "Close". System Back closes the dialog.
+ * before any heading, plain text), the source address, the llama, then one row per heading: the
+ * app's own headed sections, Licenses, Links (if any), Contact (only when no app section gives the
+ * address). A heading's row is the heading alone, no mark, pressed anywhere.
  *
- * Every row of an open drawer is its own row of the list, so pages still turn on whole rows.
+ * Each heading opens a FULL-SCREEN PAGE (15 Nov 2026, InkApps review: the legal texts were read
+ * in a narrow dialog, in drawers that opened in place). The page is its own window over the
+ * dialog, the whole screen: the heading, the text in the house PagedColumn (whole-row pages, the
+ * bar at the screen's edge), and ONE button, "Close". Licenses is a page listing the app's line
+ * and one row per library; a library opens a page of its own (its author, license, address and
+ * the full text paragraph by paragraph). Close or system Back goes one step back: a library to
+ * Licenses, a page to the dialog, the dialog away. In the page whose words give the address, that
+ * paragraph IS the contact row, pressed to write; no separate "Write to" line.
  *
- * Needs the app's EInkDialog, HouseButton, PagedColumn (and LocalListBleed), openLink (LinkOpener)
- * and the shared Licenses data (rememberLicencesData, rememberLicencesLabels, licenceRows,
- * licencePage, licenceParagraphs); no R, no strings: the app passes data, labels and the drawable id.
+ * Reading text is 18 sp on a 26 sp line, here and on every page (15 Nov 2026, the same review:
+ * about 18 sp for body text; it was labelSmall, 16 sp). Headings are never smaller: a row's
+ * heading is the same 18 sp in bold, the name and a page's heading bodyLarge (20 sp).
+ *
+ * Needs the app's EInkDialog, HouseButton, PagedColumn (and LocalListBleed), DarkWindow (DarkMode),
+ * openLink (LinkOpener) and the shared Licenses data (rememberLicencesData, rememberLicencesLabels,
+ * licenceRows, licencePage, licenceParagraphs); no R, no strings: the app passes data, labels and
+ * the drawable id.
  */
 
 const val ABOUT_WEBSITE_URL = "https://wanderthe.dev"
@@ -100,8 +117,9 @@ data class AboutData(
  * The words the dialog itself needs. [noBrowser] turns a shown address into the plain sentence.
  * [writeTo] makes the contact row ("Write to %1$s"); [noMailApp] is what is said, address and all,
  * when the phone has no email app to take it ("No email app is installed. The address is %1$s.").
- * [openDrawer] and [closeDrawer] are what a screen reader says for a closed or an open drawer, the
- * heading passed in ("Open %1$s", "Close %1$s"). [contact] and [links] head the drawers the
+ * [openDrawer] is what a screen reader says for a heading's row, the heading passed in
+ * ("Open %1$s"); [closeDrawer] is no longer used (15 Nov 2026: a heading opens a page, closed by
+ * its Close button) and stays so call sites still compile. [contact] and [links] head the rows the
  * dialog makes itself. All are English unless the app passes its own. [intro] is no longer used
  * (4 Nov 2026: the short description is plain text, not a "What it does" drawer); it stays so
  * older call sites still compile.
@@ -216,7 +234,7 @@ fun aboutRows(data: AboutData, labels: AboutLabels? = null): List<AboutRow> {
     }
 }
 
-/** The key of the Licenses drawer. */
+/** The key of the Licenses row and of its page. */
 const val ABOUT_LICENCES_KEY = "licences"
 
 /**
@@ -288,6 +306,44 @@ fun aboutLicenceItems(
     }
 }
 
+/**
+ * What a heading opens: a full-screen page. [heading] heads it, [subtitle] is a library's second
+ * line (its author), [items] are its rows, none of them a page's own heading row except, on the
+ * Licenses page, the rows of the libraries.
+ */
+data class AboutPage(val key: String, val heading: String, val subtitle: String?, val items: List<AboutItem>)
+
+/**
+ * The page for the heading row [key], or null when no row has that key. An app's own section, Links
+ * and Contact give their paragraphs, links and contact row; [ABOUT_LICENCES_KEY] gives the app's
+ * license line and a row per library; a library's key ("lic/…") gives that library's page.
+ * [licenceItems] is [aboutLicenceItems] for a set of open libraries.
+ */
+fun aboutPage(rows: List<AboutRow>, key: String, licencesHeading: String, licenceItems: (Set<String>) -> List<AboutItem>): AboutPage? {
+    if (key == ABOUT_LICENCES_KEY) {
+        return if (AboutRow.Licences in rows) AboutPage(key, licencesHeading, null, licenceItems(emptySet())) else null
+    }
+    val all = if (aboutPageParent(key) != null) licenceItems(setOf(key)) else aboutItems(rows, setOf(key), licencesHeading) { emptyList() }
+    val at = all.indexOfFirst { it is AboutItem.Head && it.key == key }
+    if (at < 0) return null
+    val head = all[at] as AboutItem.Head
+    return AboutPage(key, head.heading, head.subtitle, aboutParagraphs(all.drop(at + 1).takeWhile { it !is AboutItem.Head }))
+}
+
+/**
+ * A text of several paragraphs (blank lines between them) as one row per paragraph, so a page
+ * turns on whole paragraphs and not through the middle of a long one. A single paragraph keeps
+ * its row and its key.
+ */
+fun aboutParagraphs(items: List<AboutItem>): List<AboutItem> = items.flatMap { item ->
+    if (item !is AboutItem.Text) return@flatMap listOf(item)
+    val parts = item.text.split(Regex("\\n[ \\t]*\\n")).map { it.trim() }.filter { it.isNotEmpty() }
+    if (parts.size <= 1) listOf(item) else parts.mapIndexed { i, p -> item.copy(key = "${item.key}/$i", text = p) }
+}
+
+/** Where Close or Back on the page [key] leads: a library's page to Licenses, any other to the dialog (null). */
+fun aboutPageParent(key: String): String? = if (key.startsWith("lic/")) ABOUT_LICENCES_KEY else null
+
 /** Plain sentences for what is wrong with an app's data (use it in the app's test); empty is fine. */
 fun aboutProblems(data: AboutData): List<String> = buildList {
     if (data.title.isBlank()) add("The title is empty.")
@@ -298,7 +354,7 @@ fun aboutProblems(data: AboutData): List<String> = buildList {
 }
 
 /**
- * The About. [licencesData] and [licencesLabels] fill the Licenses drawer; by default the app's own
+ * The About. [licencesData] and [licencesLabels] fill the Licenses page; by default the app's own
  * `rememberLicencesData()` and `rememberLicencesLabels()`.
  */
 @Composable
@@ -311,46 +367,27 @@ fun HouseAboutDialog(
     licencesLabels: LicencesLabels = rememberLicencesLabels(),
 ) {
     val context = LocalContext.current
-    val room = LocalConfiguration.current.screenHeightDp.dp * 0.62f
-    val list = rememberLazyListState()
-    var open by rememberSaveable { mutableStateOf(emptySet<String>()) }
-    var opened by remember { mutableStateOf<String?>(null) }
+    // 0.66 of the screen (it was 0.62): at 18 sp the description, the source, the site and the
+    // llama still open on one page, and the dialog with its name and Close stays inside the screen.
+    val room = LocalConfiguration.current.screenHeightDp.dp * 0.66f
+    // The page that is open (a heading row's key), or null: saved, so it is still open after a turn.
+    var pageKey by rememberSaveable { mutableStateOf<String?>(null) }
     val rows = remember(data, labels) { aboutRows(data, labels) }
-    val entries = remember(rows, open, licencesData) {
-        aboutItems(rows, open, labels.licences) {
-            aboutLicenceItems(
-                licencesData,
-                open,
-                readText = { t -> t.content ?: context.resources.openRawResource(t.rawResId).bufferedReader().use { it.readText() } },
-                noText = licencesLabels.noText,
-            )
+    val entries = remember(rows, labels) { aboutItems(rows, emptySet(), labels.licences) { emptyList() } }
+    val page = remember(rows, pageKey, licencesData, labels) {
+        pageKey?.let { key ->
+            aboutPage(rows, key, labels.licences) { open ->
+                aboutLicenceItems(
+                    licencesData,
+                    open,
+                    readText = { t -> t.content ?: context.resources.openRawResource(t.rawResId).bufferedReader().use { it.readText() } },
+                    noText = licencesLabels.noText,
+                )
+            }
         }
     }
-    // An opened drawer at the foot of a page whose first line does not fit there: bring the drawer
-    // to the top of the page, so the press is answered on this page. Otherwise the page stays.
-    LaunchedEffect(opened) {
-        val key = opened ?: return@LaunchedEffect
-        withFrameNanos { }
-        val i = entries.indexOfFirst { it.key == key }
-        val info = list.layoutInfo
-        val foot = info.viewportSize.height - info.afterContentPadding
-        val head = info.visibleItemsInfo.firstOrNull { it.index == i }
-        val next = info.visibleItemsInfo.firstOrNull { it.index == i + 1 }
-        if (head != null && head.offset - info.viewportStartOffset > 0 &&
-            (next == null || next.offset - info.viewportStartOffset + next.size > foot)
-        ) {
-            list.scrollToItem(i)
-        }
-        opened = null
-    }
-    val toggle: (String) -> Unit = { key ->
-        if (key in open) {
-            open = open - key
-        } else {
-            open = open + key
-            opened = key
-        }
-    }
+    // The Licenses list keeps its place while a library's page is read.
+    val licencesList = rememberLazyListState()
     EInkDialog(onDismiss = onDismiss) {
         TextMMD(
             text = data.title,
@@ -358,28 +395,112 @@ fun HouseAboutDialog(
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 6.dp),
         )
-        PagedColumn(modifier = Modifier.fillMaxWidth().height(room), state = list) {
-            items(entries, key = { it.key }) { item ->
-                when (item) {
-                    is AboutItem.Head -> AboutHead(item, labels) { toggle(item.key) }
-                    is AboutItem.Text -> TextMMD(
-                        text = item.text,
-                        style = aboutBody(),
-                        fontWeight = if (item.bold) FontWeight.Bold else null,
-                        modifier = Modifier.fillMaxWidth().padding(start = INDENT * item.depth, top = 4.dp, bottom = 4.dp),
-                    )
-                    is AboutItem.Link -> AboutLine(item.label, depth = item.depth) {
-                        openLink(context, item.url, labels.noBrowser(aboutAddress(item.url)))
-                    }
-                    is AboutItem.Contact -> AboutLine(item.label ?: labels.writeTo(item.address), depth = item.depth) {
-                        openMail(context, item.address, data.title, labels.noMailApp(item.address))
-                    }
-                    AboutItem.Llama -> AboutLlama(labels, llamaRes)
-                }
-            }
+        PagedColumn(modifier = Modifier.fillMaxWidth().height(room)) {
+            aboutEntries(entries, data, labels, llamaRes, indent = true) { pageKey = it }
         }
         Spacer(Modifier.height(14.dp))
         HouseButton(label = labels.close, onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+    }
+    if (page != null) {
+        val back = { pageKey = aboutPageParent(page.key) }
+        AboutPageWindow(onBack = back) {
+            TextMMD(
+                text = page.heading,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth().padding(start = PAGE_SIDE, end = PAGE_SIDE, top = 16.dp),
+            )
+            // A full-screen list is not padded as a whole: the text is, so the bar sits at the
+            // screen's edge (STYLE.md). Each page starts at its top; Licenses keeps its place.
+            key(page.key) {
+                PagedColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    state = if (page.key == ABOUT_LICENCES_KEY) licencesList else rememberLazyListState(),
+                    contentPadding = PaddingValues(start = PAGE_SIDE, end = 12.dp),
+                ) {
+                    page.subtitle?.let { line ->
+                        item(key = "subtitle") {
+                            TextMMD(text = line, style = aboutBody(), modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+                        }
+                    }
+                    aboutEntries(page.items, data, labels, llamaRes, indent = false) { pageKey = it }
+                }
+            }
+            HouseButton(
+                label = labels.close,
+                onClick = back,
+                modifier = Modifier.fillMaxWidth().padding(start = PAGE_SIDE, end = PAGE_SIDE, top = 8.dp, bottom = 12.dp),
+            )
+        }
+    } else if (pageKey != null) {
+        SideEffect { pageKey = null } // a saved key that names no row any more
+    }
+}
+
+/**
+ * A page's window: the whole screen, over the About dialog, no dimmed backdrop (EInkDialog's
+ * reasons), dark in dark mode from its first frame. Back, like the page's Close, calls [onBack].
+ */
+@Composable
+private fun AboutPageWindow(onBack: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+    Dialog(onDismissRequest = onBack, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        val view = LocalView.current
+        DarkWindow()
+        SideEffect {
+            (view.parent as? DialogWindowProvider)?.window?.let { window ->
+                window.setDimAmount(0f)
+                window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            }
+        }
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // Not inside a dialog's padding: the list does not run out into any.
+            CompositionLocalProvider(LocalListBleed provides 0.dp) {
+                Column(Modifier.fillMaxSize(), content = content)
+            }
+        }
+    }
+}
+
+/** The rows of the dialog's list or of a page's; [indent] sets a library's rows in (never on a page). */
+private fun LazyListScope.aboutEntries(
+    entries: List<AboutItem>,
+    data: AboutData,
+    labels: AboutLabels,
+    llamaRes: Int,
+    indent: Boolean,
+    onOpen: (String) -> Unit,
+) {
+    // The site's address and the llama are two rows of the list, so a page can end between them.
+    // The address is not one of the model's rows: it is the null before the llama.
+    val drawn: List<AboutItem?> = entries.flatMap { if (it == AboutItem.Llama) listOf(null, it) else listOf(it) }
+    items(drawn, key = { it?.key ?: "site" }) { item ->
+        val context = LocalContext.current
+        when (item) {
+            null -> AboutLine(aboutAddress(ABOUT_WEBSITE_URL)) {
+                openLink(context, ABOUT_WEBSITE_URL, labels.noBrowser(aboutAddress(ABOUT_WEBSITE_URL)))
+            }
+            is AboutItem.Head -> AboutHead(if (indent) item else item.copy(depth = 0), labels, bold = !indent || item.depth == 0) { onOpen(item.key) }
+            is AboutItem.Text -> TextMMD(
+                text = item.text,
+                style = aboutBody(),
+                fontWeight = if (item.bold) FontWeight.Bold else null,
+                // On a page a paragraph is a row. The gap between two is all above the paragraph, none
+                // below: a paragraph whose last line just fits the page is not sent to the next one
+                // for the sake of empty space under it.
+                modifier = Modifier.fillMaxWidth().padding(start = if (indent) INDENT * item.depth else 0.dp, top = if (indent) 4.dp else 12.dp, bottom = if (indent) 4.dp else 0.dp),
+            )
+            is AboutItem.Link -> AboutLine(item.label, depth = if (indent) item.depth else 0) {
+                openLink(context, item.url, labels.noBrowser(aboutAddress(item.url)))
+            }
+            is AboutItem.Contact -> AboutLine(item.label ?: labels.writeTo(item.address), depth = if (indent) item.depth else 0) {
+                openMail(context, item.address, data.title, labels.noMailApp(item.address))
+            }
+            AboutItem.Llama -> AboutLlama(labels, llamaRes)
+        }
     }
 }
 
@@ -398,29 +519,38 @@ fun HouseAboutDialog(
 
 private val INDENT = 14.dp
 
+/** A page's side padding: the text's, not the list's (the bar sits at the screen's edge). */
+private val PAGE_SIDE = 20.dp
+
+/** The About's reading size and its line, in sp (15 Nov 2026, InkApps review: about 18 sp for body text). */
+const val ABOUT_BODY_SP: Float = 18f
+const val ABOUT_BODY_LINE_SP: Float = 26f
+
 /**
- * The About's reading text: the theme's labelSmall (16 sp in the house type scale, HouseType.kt),
- * raised to 16 sp, the house floor, if a theme sets it smaller (MMD's own is 14 sp). The name above
- * it stays bodyLarge (20 sp); a drawer's heading is this size in bold.
+ * The About's reading text, in the dialog and on every page it opens: the theme's bodyMedium
+ * (18 sp in MMD's scale and the house one), held at 18 sp if a theme sets it smaller, on a 26 sp
+ * line (MMD sets no line height, and Lato's own line is 1.2 times its size, which reads tight in
+ * a long legal text and measures as smaller type than it is). The name above stays bodyLarge
+ * (20 sp); a heading's row is this size in bold.
  */
 @Composable
 private fun aboutBody(): TextStyle {
-    val s = MaterialTheme.typography.labelSmall
-    return if (s.fontSize.isSp && s.fontSize.value >= 16f) s else s.copy(fontSize = 16.sp)
+    val s = MaterialTheme.typography.bodyMedium
+    val size = if (s.fontSize.isSp && s.fontSize.value >= ABOUT_BODY_SP) s.fontSize else ABOUT_BODY_SP.sp
+    val line = if (s.lineHeight.isSp && s.lineHeight.value >= ABOUT_BODY_LINE_SP) s.lineHeight else (ABOUT_BODY_LINE_SP * size.value / ABOUT_BODY_SP).sp
+    return s.copy(fontSize = size, lineHeight = line)
 }
 
 /**
- * A drawer's row: the heading (and a second line, for a library) and no mark (4 Nov 2026: no + / −;
- * an open drawer shows by its text beneath), as tall as a thumb, pressed anywhere to open or close.
- * No ripple: on e-ink the press is the text appearing.
+ * A heading's row: the heading (and a second line, for a library) and no mark, as tall as a thumb,
+ * pressed anywhere to open its page. No ripple: on e-ink the press is the page appearing.
  */
 @Composable
-private fun AboutHead(item: AboutItem.Head, labels: AboutLabels, onToggle: () -> Unit) {
+private fun AboutHead(item: AboutItem.Head, labels: AboutLabels, bold: Boolean, onOpen: () -> Unit) {
     // The second line (a library's author, its copyright holder: Lato's is the font's designer) is
     // said too: the row's own words are replaced by [said], so a line left out here is never heard.
-    val said = (if (item.open) labels.closeDrawer(item.heading) else labels.openDrawer(item.heading)) +
-        item.subtitle?.let { ", $it" }.orEmpty()
-    val weight = if (item.depth == 0) FontWeight.Bold else null
+    val said = labels.openDrawer(item.heading) + item.subtitle?.let { ", $it" }.orEmpty()
+    val weight = if (bold) FontWeight.Bold else null
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -430,11 +560,12 @@ private fun AboutHead(item: AboutItem.Head, labels: AboutLabels, onToggle: () ->
             .clearAndSetSemantics {
                 contentDescription = said
                 role = Role.Button
-                onClick { onToggle(); true }
+                onClick { onOpen(); true }
             }
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onToggle),
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onOpen),
     ) {
-        Column(Modifier.weight(1f)) {
+        // A library's two lines get air above and below, so its row is told from the next one.
+        Column(Modifier.weight(1f).padding(vertical = if (item.subtitle == null) 0.dp else 6.dp)) {
             TextMMD(text = item.heading, style = aboutBody(), fontWeight = weight)
             item.subtitle?.let { TextMMD(text = it, style = aboutBody()) }
         }
@@ -475,34 +606,23 @@ private fun AboutLine(text: String, bold: Boolean = false, depth: Int = 0, onCli
 }
 
 /**
- * The foot of the About: the site's address, and the llama with "Feed the llamas", which goes
- * straight to the checkout. The drawing is ink, not an emoji (STYLE.md).
+ * The llama with "Feed the llamas", which goes straight to the checkout, on the line under the
+ * site's address (15 Nov 2026: at 18 sp the two no longer fit side by side in the dialog, and
+ * "Feed the llamas" broke in two). The drawing is ink, not an emoji (STYLE.md).
  */
 @Composable
 private fun AboutLlama(labels: AboutLabels, llamaRes: Int) {
     val context = LocalContext.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .heightIn(min = 48.dp)
+            .clickable { openLink(context, ABOUT_DONATE_URL, labels.noBrowser(aboutAddress(ABOUT_DONATE_URL))) },
     ) {
-        TextMMD(
-            text = aboutAddress(ABOUT_WEBSITE_URL),
-            style = aboutBody(),
-            modifier = Modifier
-                .clickable { openLink(context, ABOUT_WEBSITE_URL, labels.noBrowser(aboutAddress(ABOUT_WEBSITE_URL))) }
-                .heightIn(min = 48.dp)
-                .wrapContentHeight(Alignment.CenterVertically),
-        )
+        Image(painter = painterResource(llamaRes), contentDescription = null, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(6.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clickable { openLink(context, ABOUT_DONATE_URL, labels.noBrowser(aboutAddress(ABOUT_DONATE_URL))) }
-                .heightIn(min = 48.dp),
-        ) {
-            Image(painter = painterResource(llamaRes), contentDescription = null, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(6.dp))
-            TextMMD(text = labels.feedTheLlamas, style = aboutBody())
-        }
+        TextMMD(text = labels.feedTheLlamas, style = aboutBody())
     }
 }

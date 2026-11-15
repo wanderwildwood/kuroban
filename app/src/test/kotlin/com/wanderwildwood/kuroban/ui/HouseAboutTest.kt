@@ -129,6 +129,65 @@ class HouseAboutTest {
         assertEquals(closed, items.subList(7, 7 + closed.size))
     }
 
+    private fun licencePages(open: Set<String>) = aboutLicenceItems(licences, open, { it.content!! }, { "$it needs none" })
+
+    @Test fun aHeadingOpensAPageOfItsOwnRows() {
+        val rows = aboutRows(data)
+        val privacy = aboutPage(rows, "d0", "Licenses", ::licencePages)!!
+        assertEquals("Privacy", privacy.heading)
+        assertNull(privacy.subtitle)
+        assertEquals(listOf(AboutItem.Text("d0.0", "Nothing leaves the phone."), AboutItem.Text("d0.1", "No ads.")), privacy.items)
+        // the address sentence is still the contact row, on its page
+        val contact = aboutPage(rows, "d1", "Licenses", ::licencePages)!!
+        assertEquals("How to contact us", contact.heading)
+        assertEquals("Write to email@wanderthe.dev.", (contact.items.single() as AboutItem.Contact).label)
+        val links = aboutPage(rows, "links", "Licenses", ::licencePages)!!
+        assertEquals("https://example.org/work", (links.items.single() as AboutItem.Link).url)
+        // every heading row of the dialog has a page, and no page holds another section's words
+        val heads = aboutItems(rows, emptySet(), "Licenses") { error("closed") }.filterIsInstance<AboutItem.Head>()
+        assertEquals(listOf("d0", "d1", "d2", ABOUT_LICENCES_KEY, "links"), heads.map { it.key })
+        heads.forEach { h -> assertEquals(h.heading, aboutPage(rows, h.key, "Licenses", ::licencePages)!!.heading) }
+        assertEquals(listOf("GPL-3.0-only."), aboutPage(rows, "d2", "Licenses", ::licencePages)!!.items.map { (it as AboutItem.Text).text })
+        assertNull(aboutPage(rows, "d9", "Licenses", ::licencePages))
+        assertNull(aboutPage(rows, "source", "Licenses", ::licencePages))
+    }
+
+    @Test fun licensesIsAPageAndEachLibraryAPageUnderIt() {
+        val rows = aboutRows(data)
+        val list = aboutPage(rows, ABOUT_LICENCES_KEY, "Licenses", ::licencePages)!!
+        assertEquals("Licenses", list.heading)
+        assertEquals(listOf("lic.line", "lic/app", "lic/lib:Okio"), list.items.map { it.key })
+        assertTrue(list.items.drop(1).all { it is AboutItem.Head })
+        val lib = aboutPage(rows, "lic/lib:Okio", "Licenses", ::licencePages)!!
+        assertEquals("Okio", lib.heading)
+        assertEquals("Square", lib.subtitle)
+        assertEquals(listOf("Apache-2.0", "Apache (full text)", "Apache one."), lib.items.filterIsInstance<AboutItem.Text>().map { it.text })
+        assertTrue(lib.items.any { it is AboutItem.Link && it.url == "https://square.github.io/okio/" })
+        assertTrue(lib.items.none { it is AboutItem.Head })
+        val app = aboutPage(rows, "lic/app", "Licenses", ::licencePages)!!
+        assertEquals(listOf("GPL one.", "GPL two."), app.items.filter { it.key.startsWith("lic/app.t0.") }.map { (it as AboutItem.Text).text })
+        assertNull(aboutPage(rows, "lic/lib:Nothing", "Licenses", ::licencePages))
+        // Close or Back: a library to Licenses, any other page to the dialog
+        assertEquals(ABOUT_LICENCES_KEY, aboutPageParent("lic/lib:Okio"))
+        assertNull(aboutPageParent(ABOUT_LICENCES_KEY))
+        assertNull(aboutPageParent("d0"))
+    }
+
+    @Test fun aLongTextIsARowPerParagraph() {
+        val long = data.copy(sections = listOf(AboutSection("Privacy", "One.\n\nTwo, still two.\n \nThree."), AboutSection(null, "Four.")))
+        val page = aboutPage(aboutRows(long), "d0", "Licenses", ::licencePages)!!
+        assertEquals(listOf("One.", "Two, still two.", "Three.", "Four."), page.items.map { (it as AboutItem.Text).text })
+        assertEquals(listOf("d0.0/0", "d0.0/1", "d0.0/2", "d0.1"), page.items.map { it.key })
+        // links and the contact row are left as they are
+        val contact = AboutItem.Contact("c", ABOUT_CONTACT_EMAIL, label = "Write.\n\nNow.")
+        assertEquals(listOf(contact), aboutParagraphs(listOf(contact)))
+    }
+
+    @Test fun readingTextIsEighteenOnATallerLine() {
+        assertTrue(ABOUT_BODY_SP >= 18f)
+        assertTrue(ABOUT_BODY_LINE_SP >= ABOUT_BODY_SP * 1.4f)
+    }
+
     @Test fun drawerLabelsDefaultToEnglish() {
         val labels = AboutLabels("Close", "Licenses", "Feed the llamas", { it }, { it }, { it })
         assertEquals("Open Privacy", labels.openDrawer("Privacy"))
