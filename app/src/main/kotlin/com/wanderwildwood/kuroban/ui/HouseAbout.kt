@@ -42,6 +42,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import com.mudita.mmd.components.text.TextMMD
 
 /*
@@ -55,8 +57,9 @@ import com.mudita.mmd.components.text.TextMMD
  * inline), Links (if any), Contact (only when no app section gives the address). A drawer is its
  * heading alone, no + or − mark, pressed anywhere to open or close it; all start closed and
  * several may be open. In the drawer whose words give the address, that paragraph IS the contact
- * row, pressed to write; no separate "Write to" line. Reading text is labelSmall (16 sp), the
- * name bodyLarge. Under the list ONE button, "Close". System Back closes the dialog.
+ * row, pressed to write; no separate "Write to" line. Reading text is labelSmall, never under
+ * 16 sp (15 Nov 2026: held there even in a theme without the house type scale), the name
+ * bodyLarge (20 sp). Under the list ONE button, "Close". System Back closes the dialog.
  *
  * Every row of an open drawer is its own row of the list, so pages still turn on whole rows.
  *
@@ -361,7 +364,7 @@ fun HouseAboutDialog(
                     is AboutItem.Head -> AboutHead(item, labels) { toggle(item.key) }
                     is AboutItem.Text -> TextMMD(
                         text = item.text,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = aboutBody(),
                         fontWeight = if (item.bold) FontWeight.Bold else null,
                         modifier = Modifier.fillMaxWidth().padding(start = INDENT * item.depth, top = 4.dp, bottom = 4.dp),
                     )
@@ -396,13 +399,27 @@ fun HouseAboutDialog(
 private val INDENT = 14.dp
 
 /**
+ * The About's reading text: the theme's labelSmall (16 sp in the house type scale, HouseType.kt),
+ * raised to 16 sp, the house floor, if a theme sets it smaller (MMD's own is 14 sp). The name above
+ * it stays bodyLarge (20 sp); a drawer's heading is this size in bold.
+ */
+@Composable
+private fun aboutBody(): TextStyle {
+    val s = MaterialTheme.typography.labelSmall
+    return if (s.fontSize.isSp && s.fontSize.value >= 16f) s else s.copy(fontSize = 16.sp)
+}
+
+/**
  * A drawer's row: the heading (and a second line, for a library) and no mark (4 Nov 2026: no + / −;
  * an open drawer shows by its text beneath), as tall as a thumb, pressed anywhere to open or close.
  * No ripple: on e-ink the press is the text appearing.
  */
 @Composable
 private fun AboutHead(item: AboutItem.Head, labels: AboutLabels, onToggle: () -> Unit) {
-    val said = if (item.open) labels.closeDrawer(item.heading) else labels.openDrawer(item.heading)
+    // The second line (a library's author, its copyright holder: Lato's is the font's designer) is
+    // said too: the row's own words are replaced by [said], so a line left out here is never heard.
+    val said = (if (item.open) labels.closeDrawer(item.heading) else labels.openDrawer(item.heading)) +
+        item.subtitle?.let { ", $it" }.orEmpty()
     val weight = if (item.depth == 0) FontWeight.Bold else null
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -418,8 +435,8 @@ private fun AboutHead(item: AboutItem.Head, labels: AboutLabels, onToggle: () ->
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onToggle),
     ) {
         Column(Modifier.weight(1f)) {
-            TextMMD(text = item.heading, style = MaterialTheme.typography.labelSmall, fontWeight = weight)
-            item.subtitle?.let { TextMMD(text = it, style = MaterialTheme.typography.labelSmall) }
+            TextMMD(text = item.heading, style = aboutBody(), fontWeight = weight)
+            item.subtitle?.let { TextMMD(text = it, style = aboutBody()) }
         }
     }
 }
@@ -446,7 +463,7 @@ fun openMail(context: Context, address: String, subject: String, noMailApp: Stri
 private fun AboutLine(text: String, bold: Boolean = false, depth: Int = 0, onClick: () -> Unit) {
     TextMMD(
         text = text,
-        style = MaterialTheme.typography.labelSmall,
+        style = aboutBody(),
         fontWeight = if (bold) FontWeight.Bold else null,
         modifier = Modifier
             .fillMaxWidth()
@@ -470,7 +487,7 @@ private fun AboutLlama(labels: AboutLabels, llamaRes: Int) {
     ) {
         TextMMD(
             text = aboutAddress(ABOUT_WEBSITE_URL),
-            style = MaterialTheme.typography.labelSmall,
+            style = aboutBody(),
             modifier = Modifier
                 .clickable { openLink(context, ABOUT_WEBSITE_URL, labels.noBrowser(aboutAddress(ABOUT_WEBSITE_URL))) }
                 .heightIn(min = 48.dp)
@@ -485,7 +502,7 @@ private fun AboutLlama(labels: AboutLabels, llamaRes: Int) {
         ) {
             Image(painter = painterResource(llamaRes), contentDescription = null, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(6.dp))
-            TextMMD(text = labels.feedTheLlamas, style = MaterialTheme.typography.labelSmall)
+            TextMMD(text = labels.feedTheLlamas, style = aboutBody())
         }
     }
 }
