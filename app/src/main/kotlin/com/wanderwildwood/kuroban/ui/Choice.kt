@@ -12,8 +12,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -53,11 +51,9 @@ internal fun ChoiceButton(
     val border = ButtonDefaultsMMD.outlinedButtonBorder(true).copy(width = choiceBorderWidth(chosen))
     OutlinedButtonMMD(
         onClick = onClick,
-        // Said to a screen reader as the border says it to the eye: one of a set, chosen or not.
-        modifier = modifier.semantics {
-            role = Role.RadioButton
-            selected = chosen
-        },
+        // Said to a screen reader as the border says it to the eye: chosen or not. No radio role:
+        // with one, Android reports the choice as "checked" and leaves "selected" false.
+        modifier = modifier.semantics { selected = chosen },
         border = border,
         contentPadding = contentPadding,
     ) {
