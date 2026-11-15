@@ -16,7 +16,7 @@ val LICENCE_RAW: List<Pair<String, Int>> = listOf(
 
 @Composable
 fun rememberLicencesData(): LicencesData = LicencesData(
-    appName = "Go",
+    appName = stringResource(R.string.app_name),
     sourceUrl = SOURCE_URL,
     licenceLine = stringResource(R.string.licences_licence),
     // One row per artifact in the APK, listed by the build (config/libraries adds what Gradle cannot see).
