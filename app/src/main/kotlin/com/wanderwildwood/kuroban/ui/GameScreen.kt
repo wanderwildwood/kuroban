@@ -29,8 +29,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -399,8 +397,9 @@ private fun BottomBar(
  *
  * The first three are one choice and the last is an action, which is the same shape the
  * playing bar has: three things you might do and, at the end, the one that commits. The
- * chosen stone is solid and the others are outlined, the way every choice on the new-game
- * screen is drawn, so nothing here needs a colour or a check mark to read on E Ink.
+ * tools are outlined and the chosen one has the heavy border, check mark and bold words of
+ * every choice on the new-game screen ([ChoiceButton]); only Play is solid, so the tool in
+ * hand and the press that starts the game never look alike.
  *
  * There is no Undo and no Clear. A stone put down in the wrong place comes off with one
  * tap of Erase, and a position not worth keeping is thrown away from the menu.
@@ -419,21 +418,16 @@ private fun SetupBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         for ((label, stone) in listOf(stringResource(R.string.stone_black) to Stone.BLACK, stringResource(R.string.stone_white) to Stone.WHITE, stringResource(R.string.setup_erase) to null)) {
-            val content: @Composable () -> Unit = {
-                TextMMD(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-            }
-            val tool = Modifier
-                .weight(1f)
-                .height(48.dp)
-                .semantics {
-                    role = Role.RadioButton
-                    selected = placing == stone
-                }
-            if (placing == stone) {
-                ButtonMMD(onClick = { onPlacing(stone) }, contentPadding = TIGHT, modifier = tool) { content() }
-            } else {
-                OutlinedButtonMMD(onClick = { onPlacing(stone) }, contentPadding = TIGHT, modifier = tool) { content() }
-            }
+            ChoiceButton(
+                label = label,
+                chosen = placing == stone,
+                onClick = { onPlacing(stone) },
+                style = MaterialTheme.typography.labelSmall,
+                contentPadding = TIGHT,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+            )
         }
 
         ButtonMMD(

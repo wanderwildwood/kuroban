@@ -28,8 +28,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -279,9 +277,9 @@ private fun StartingBoard(handicap: Int, size: androidx.compose.ui.unit.Dp) {
 }
 
 /**
- * A labelled row of mutually exclusive choices. The selected one is a solid black
- * button and the rest are outlined, which survives E Ink's lack of colour and does not
- * depend on the user spotting a small check mark.
+ * A labelled row of mutually exclusive choices. Every option is outlined; the chosen one
+ * has the heavy border, a check mark and bold words ([ChoiceButton]), so it does not wear
+ * the solid fill that marks Play, the press that starts the game.
  */
 @Composable
 private fun <T> ChoiceRow(
@@ -296,23 +294,15 @@ private fun <T> ChoiceRow(
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             for (option in options) {
-                val isSelected = option == selected
-                val content: @Composable () -> Unit = {
-                    TextMMD(text = optionLabel(option), style = MaterialTheme.typography.bodySmall, maxLines = 1)
-                }
-                // Said to a screen reader as the fill says it to the eye: one of a set, chosen or not.
-                val choice = Modifier
-                    .weight(1f)
-                    .height(50.dp)
-                    .semantics {
-                        role = Role.RadioButton
-                        this.selected = isSelected
-                    }
-                if (isSelected) {
-                    ButtonMMD(onClick = { onSelect(option) }, modifier = choice) { content() }
-                } else {
-                    OutlinedButtonMMD(onClick = { onSelect(option) }, modifier = choice) { content() }
-                }
+                ChoiceButton(
+                    label = optionLabel(option),
+                    chosen = option == selected,
+                    onClick = { onSelect(option) },
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                )
             }
         }
     }
