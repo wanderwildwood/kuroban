@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mudita.mmd.ThemeMMD
@@ -31,7 +32,13 @@ private fun Kuroban(viewModel: GameViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when (val game = state) {
-        null -> NewGameScreen(onPlay = viewModel::newGame)
+        null -> NewGameScreen(
+            initial = remember { viewModel.lastChoices() },
+            onPlay = { picked, config ->
+                viewModel.rememberChoices(picked)
+                viewModel.newGame(config)
+            },
+        )
         else -> GameScreen(
             state = game,
             onTap = viewModel::tap,

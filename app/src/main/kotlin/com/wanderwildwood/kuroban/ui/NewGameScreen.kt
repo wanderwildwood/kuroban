@@ -25,6 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -34,7 +40,11 @@ import com.mudita.mmd.components.buttons.OutlinedButtonMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
 import com.wanderwildwood.kuroban.R
+import com.wanderwildwood.kuroban.game.BOARD_SIZE
 import com.wanderwildwood.kuroban.game.Difficulty
+import com.wanderwildwood.kuroban.game.HANDICAPS
+import com.wanderwildwood.kuroban.game.Point
+import com.wanderwildwood.kuroban.game.handicapPoints
 import com.wanderwildwood.kuroban.game.GameConfig
 import com.wanderwildwood.kuroban.game.Opponent
 import com.wanderwildwood.kuroban.game.Setup
@@ -47,11 +57,17 @@ import com.wanderwildwood.kuroban.game.Stone
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
-    var opponent by remember { mutableStateOf(Opponent.COMPUTER) }
-    var difficulty by remember { mutableStateOf(Difficulty.NORMAL) }
-    var humanColor by remember { mutableStateOf(Stone.BLACK) }
-    var handicap by remember { mutableStateOf(0) }
+fun NewGameScreen(
+    // Last time's choices: the screen opens on them.
+    initial: GameConfig,
+    // The four choices as they stand, to be remembered, and the game they start.
+    onPlay: (picked: GameConfig, game: GameConfig) -> Unit,
+) {
+    var opponent by remember { mutableStateOf(initial.opponent) }
+    var difficulty by remember { mutableStateOf(initial.difficulty) }
+    var humanColor by remember { mutableStateOf(initial.humanColor) }
+    var handicap by remember { mutableStateOf(initial.handicap) }
+    val picked = GameConfig(opponent = opponent, difficulty = difficulty, humanColor = humanColor, handicap = handicap)
     var aboutOpen by remember { mutableStateOf(false) }
     val gnuGoLabel = stringResource(R.string.new_game_opponent_gnugo)
     val twoPlayersLabel = stringResource(R.string.new_game_opponent_two_players)
@@ -114,7 +130,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
             Spacer(Modifier.height(22.dp))
             ChoiceRow(
                 label = stringResource(R.string.new_game_handicap),
-                options = listOf(0, 2, 3, 4, 5),
+                options = HANDICAPS,
                 selected = handicap,
                 optionLabel = { "$it" },
                 onSelect = { handicap = it },
@@ -129,8 +145,10 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                 style = MaterialTheme.typography.labelSmall,
             )
 
-            // The empty middle of this screen was doing nothing; a corner of a board fills
-            // it and says what the app is without a word of explanation. It takes whatever
+            // The empty middle of this screen was doing nothing; a board fills it and says
+            // what the app is without a word of explanation. It is the board the game will
+            // start on: empty, or with the handicap stones where GNU Go will put them, so it
+            // changes with the choice above it rather than contradicting it. It takes whatever
             // room is going spare - which is most of the screen once two players is picked
             // and the computer settings go away - and bows out entirely when there is none,
             // rather than being wedged in at a size that looks like a mistake.
@@ -143,7 +161,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
             ) {
                 val available = minOf(maxWidth, maxHeight)
                 if (available >= 88.dp) {
-                    GobanMark(size = minOf(available, 200.dp))
+                    StartingBoard(handicap = handicap, size = minOf(available, 200.dp))
                 }
             }
 
@@ -154,6 +172,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                 OutlinedButtonMMD(
                     onClick = {
                         onPlay(
+                            picked,
                             GameConfig(
                                 opponent = opponent,
                                 difficulty = difficulty,
@@ -172,16 +191,7 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
                     TextMMD(text = stringResource(R.string.new_game_set_up), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                 }
                 ButtonMMD(
-                    onClick = {
-                        onPlay(
-                            GameConfig(
-                                opponent = opponent,
-                                difficulty = difficulty,
-                                humanColor = humanColor,
-                                handicap = handicap,
-                            )
-                        )
-                    },
+                    onClick = { onPlay(picked, picked) },
                     modifier = Modifier
                         .weight(1f)
                         .height(54.dp),
@@ -200,10 +210,12 @@ fun NewGameScreen(onPlay: (GameConfig) -> Unit) {
 @Composable
 private fun InfoButton(onClick: () -> Unit) {
     val ink = MaterialTheme.colorScheme.onSurface
+    val said = stringResource(R.string.cd_about)
     Box(
         modifier = Modifier
             .size(48.dp)
-            .clickable(onClick = onClick),
+            .semantics { contentDescription = said }
+            .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(22.dp)) {
@@ -222,37 +234,47 @@ private fun InfoButton(onClick: () -> Unit) {
     }
 }
 
-/** A small square of goban with four stones on it, drawn the same way the real board is. */
+/**
+ * The board a game starts on, small: the nine lines, the star points, and Black's handicap
+ * stones if there are any, drawn the way the real board draws them.
+ */
 @Composable
-private fun GobanMark(size: androidx.compose.ui.unit.Dp = 132.dp) {
+private fun StartingBoard(handicap: Int, size: androidx.compose.ui.unit.Dp) {
     val ink = MaterialTheme.colorScheme.onSurface
     val paper = MaterialTheme.colorScheme.surface
-    val lines = 5
+    val stones = handicapPoints(handicap)
+    val said = if (stones.isEmpty()) {
+        stringResource(R.string.new_game_board_empty)
+    } else {
+        stringResource(R.string.new_game_board_handicap, stones.size)
+    }
 
-    Canvas(modifier = Modifier.size(size).keepColors().background(paper)) { // its black stones stay black in dark mode
-        val cell = this.size.minDimension / lines
+    Canvas(
+        modifier = Modifier
+            .size(size)
+            .keepColors() // its black stones stay black in dark mode
+            .background(paper)
+            .semantics { contentDescription = said },
+    ) {
+        val cell = this.size.minDimension / BOARD_SIZE
         val origin = cell / 2f
-        val span = (lines - 1) * cell
+        val span = (BOARD_SIZE - 1) * cell
         val hairline = 1.dp.toPx()
         val rim = 2.dp.toPx()
-        val radius = cell * 0.46f
+        val radius = cell * 0.44f
 
-        for (i in 0 until lines) {
-            val at = origin + i * cell
-            drawLine(ink, Offset(origin, at), Offset(origin + span, at), hairline)
-            drawLine(ink, Offset(at, origin), Offset(at, origin + span), hairline)
+        fun at(point: Point) = Offset(origin + point.col * cell, origin + point.row * cell)
+
+        for (i in 0 until BOARD_SIZE) {
+            val line = origin + i * cell
+            drawLine(ink, Offset(origin, line), Offset(origin + span, line), hairline)
+            drawLine(ink, Offset(line, origin), Offset(line, origin + span), hairline)
         }
-        drawCircle(ink, radius = cell * 0.08f, center = Offset(origin + 2 * cell, origin + 2 * cell))
-
-        fun at(col: Int, row: Int) = Offset(origin + col * cell, origin + row * cell)
-
-        // A quiet, symmetric arrangement - it is a mark, not a position worth reading.
-        drawCircle(ink, radius = radius, center = at(1, 1))
-        drawCircle(ink, radius = radius, center = at(3, 3))
-        for (point in listOf(at(3, 1), at(1, 3))) {
-            drawCircle(paper, radius = radius, center = point)
-            drawCircle(ink, radius = radius, center = point, style = Stroke(rim))
+        drawRect(ink, topLeft = Offset(origin, origin), size = Size(span, span), style = Stroke(rim))
+        for (star in listOf(Point(2, 2), Point(6, 2), Point(4, 4), Point(2, 6), Point(6, 6))) {
+            drawCircle(ink, radius = cell * 0.08f, center = at(star))
         }
+        for (stone in stones) drawCircle(ink, radius = radius, center = at(stone))
     }
 }
 
@@ -278,20 +300,18 @@ private fun <T> ChoiceRow(
                 val content: @Composable () -> Unit = {
                     TextMMD(text = optionLabel(option), style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 }
+                // Said to a screen reader as the fill says it to the eye: one of a set, chosen or not.
+                val choice = Modifier
+                    .weight(1f)
+                    .height(50.dp)
+                    .semantics {
+                        role = Role.RadioButton
+                        this.selected = isSelected
+                    }
                 if (isSelected) {
-                    ButtonMMD(
-                        onClick = { onSelect(option) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                    ) { content() }
+                    ButtonMMD(onClick = { onSelect(option) }, modifier = choice) { content() }
                 } else {
-                    OutlinedButtonMMD(
-                        onClick = { onSelect(option) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                    ) { content() }
+                    OutlinedButtonMMD(onClick = { onSelect(option) }, modifier = choice) { content() }
                 }
             }
         }

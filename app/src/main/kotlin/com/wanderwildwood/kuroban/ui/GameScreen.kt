@@ -27,6 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mudita.mmd.components.buttons.ButtonMMD
@@ -299,10 +304,12 @@ private fun RowScope.Captures(state: GameState) {
 @Composable
 private fun MenuButton(onClick: () -> Unit) {
     val ink = MaterialTheme.colorScheme.onSurface
+    val said = stringResource(R.string.cd_menu)
     Box(
         modifier = Modifier
             .size(48.dp)
-            .clickable(onClick = onClick),
+            .semantics { contentDescription = said }
+            .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(20.dp)) {
@@ -415,22 +422,17 @@ private fun SetupBar(
             val content: @Composable () -> Unit = {
                 TextMMD(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
             }
+            val tool = Modifier
+                .weight(1f)
+                .height(48.dp)
+                .semantics {
+                    role = Role.RadioButton
+                    selected = placing == stone
+                }
             if (placing == stone) {
-                ButtonMMD(
-                    onClick = { onPlacing(stone) },
-                    contentPadding = TIGHT,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                ) { content() }
+                ButtonMMD(onClick = { onPlacing(stone) }, contentPadding = TIGHT, modifier = tool) { content() }
             } else {
-                OutlinedButtonMMD(
-                    onClick = { onPlacing(stone) },
-                    contentPadding = TIGHT,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                ) { content() }
+                OutlinedButtonMMD(onClick = { onPlacing(stone) }, contentPadding = TIGHT, modifier = tool) { content() }
             }
         }
 

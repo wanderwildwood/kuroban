@@ -36,6 +36,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val store = GameStore(File(application.filesDir, "game-in-progress.txt"))
 
+    /** The new-game screen's last choices, which the next new game opens on. */
+    private val choices = NewGameChoices(File(application.filesDir, "new-game-choices.txt"))
+
+    fun lastChoices(): GameConfig = choices.load()
+
+    fun rememberChoices(picked: GameConfig) = choices.save(picked)
+
     /**
      * Where a hand-placed position is written for the engine to read.
      *
@@ -385,7 +392,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (consecutivePasses >= 2) {
                     finish(active)
                 } else {
-                    continueAfterHumanMove(active, current.config, message = getApplication<Application>().getString(R.string.game_message_you_passed))
+                    // Across the table "You" is either player, and the stone beside the
+                    // message is already the other one's: say whose pass it was.
+                    val app = getApplication<Application>()
+                    val said = if (current.config.opponent == Opponent.HUMAN) {
+                        app.getString(
+                            R.string.game_message_stone_passed,
+                            app.getString(if (current.toMove == Stone.BLACK) R.string.stone_black else R.string.stone_white),
+                        )
+                    } else {
+                        app.getString(R.string.game_message_you_passed)
+                    }
+                    continueAfterHumanMove(active, current.config, message = said)
                 }
             } catch (e: Exception) {
                 broken(e)

@@ -30,6 +30,12 @@
     <string name="new_game_set_up">Set up</string>
     <!-- Button: start the game (verb) -->
     <string name="new_game_play">Play</string>
+    <!-- Spoken labels for the two drawn icons in the top bar -->
+    <string name="cd_about">About</string>
+    <string name="cd_menu">Menu</string>
+    <!-- Spoken for the small board on the new-game screen. %1$d is the number of handicap stones -->
+    <string name="new_game_board_empty">An empty board</string>
+    <string name="new_game_board_handicap">A board with Black\'s %1$d handicap stones</string>
 
     <!-- ============================================================ -->
     <!-- Game screen: the status in the top bar -->
@@ -46,6 +52,8 @@
     <string name="game_message_no_liberties">That leaves no liberties</string>
     <!-- "Pass" as the Go move: you gave up your turn -->
     <string name="game_message_you_passed">You passed</string>
+    <!-- Two players at one phone: %1$s is Black or White, the one who just passed -->
+    <string name="game_message_stone_passed">%1$s passed</string>
     <string name="game_message_nothing_to_suggest">Nothing worth suggesting</string>
     <string name="game_message_gnugo_passed">GNU Go passed</string>
     <string name="game_message_engine_stopped">The engine stopped</string>
