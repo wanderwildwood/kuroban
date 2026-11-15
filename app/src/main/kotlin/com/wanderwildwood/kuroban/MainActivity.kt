@@ -15,14 +15,15 @@ import com.wanderwildwood.kuroban.ui.GameScreen
 import com.wanderwildwood.kuroban.ui.NewGameScreen
 import com.wanderwildwood.kuroban.ui.houseTypography
 import com.wanderwildwood.kuroban.ui.monochrome
+import com.wanderwildwood.kuroban.ui.DarkSelection
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ThemeMMD(colorScheme = monochrome, typography = houseTypography) {
+            ThemeMMD(colorScheme = monochrome, typography = houseTypography) { DarkSelection {
                 ArmedScope { Kuroban() }
-            }
+            } }
         }
     }
 }
