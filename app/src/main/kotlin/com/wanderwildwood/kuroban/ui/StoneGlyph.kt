@@ -1,7 +1,6 @@
 package com.wanderwildwood.kuroban.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -22,10 +21,13 @@ import com.wanderwildwood.kuroban.game.Stone
 fun StoneGlyph(stone: Stone, size: Dp = 13.dp) {
     val ink = MaterialTheme.colorScheme.onSurface
     val paper = MaterialTheme.colorScheme.surface
-    // Drawn as the board draws it, solid black and rimmed white, and like the board it keeps
-    // its colors in dark mode, on a patch of the board's paper (unseen on the light page).
-    val rimmed = stone != Stone.BLACK
-    Canvas(modifier = Modifier.size(size).keepColors().background(paper)) {
+    // As the board shows them: a black stone black, a white stone white, in light and in dark.
+    // No patch of paper behind it (a white square on the dark page). Dark mode turns the page
+    // over, ink for paper, so there the two drawings change places: the black stone is the
+    // paper-filled disc, shown black, with the rim that parts it from the dark page, and the
+    // white stone the solid ink disc, shown white.
+    val rimmed = (stone != Stone.BLACK) != DarkMode.on
+    Canvas(modifier = Modifier.size(size)) {
         val rim = 1.5.dp.toPx()
         val radius = this.size.minDimension / 2f - rim / 2f
         if (!rimmed) {
