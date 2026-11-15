@@ -32,12 +32,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -60,6 +62,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
@@ -99,6 +102,13 @@ import kotlin.math.max
  * the bar ends that far above the foot of the list, so the button keeps its corner and the lower
  * chevron stands over it instead of under it, where a press meant for the next page pressed the
  * button. One 56 dp button on its 16 dp margin is 72 dp. The rows are not moved.
+ *
+ * A list that gets shorter under its page (15 Nov 2026) comes back to its last real page. Level's
+ * Settings: turned on to "Forget calibration", then forgotten, the row went and the page was left
+ * on the blank tail alone, with no scrollbar and nothing a swipe could turn. The page that ends
+ * on the last row is shown instead, as a turn back from the end would show it. Only then: a list
+ * that grows, or a page that still shows a row, is left where it is, and a turn under way is let
+ * finish first.
  *
  * [onPullAtTop], when given, is called when a swipe down starts on the first page of the rows: the
  * list asks for them again. It asks for nothing otherwise, and does not take the swipe from the
@@ -159,6 +169,13 @@ fun PagedColumn(
     val cutRow by rememberUpdatedState(showCutRow)
     val shown by remember(state) { derivedStateOf { state.layoutInfo.totalItemsCount > if (cutRow) 0 else 1 } }
     val pages by remember(state) { derivedStateOf { state.layoutInfo.view(cutRow).pages } }
+    // The rows went from under the page: back to the last real one (see above).
+    val lost by remember(state) { derivedStateOf { stranded(state.layoutInfo.view(cutRow)) } }
+    LaunchedEffect(state, lost) {
+        if (!lost) return@LaunchedEffect
+        snapshotFlow { state.isScrollInProgress }.first { !it }
+        if (stranded(state.layoutInfo.view(cutRow))) state.resnap(cutRow)
+    }
     Row(
         modifier = (if (onPullAtTop == null) modifier else modifier.pullAtTop(state) { pull?.invoke(); Unit })
             .then(widen)
@@ -297,6 +314,16 @@ internal fun backSnap(page: PageView): Int? {
     return page.rows.getOrNull(1)?.index
 }
 
+/**
+ * Whether [page] is past the end of a list that got shorter under it: no row with anything in it
+ * is on the page (only the blank tail, or rows of no height), the list has rows, and the page is
+ * not the first. A turn never lands there (the last page opens on the last row), so only a list
+ * that shrank does. Never with the cut row shown: that list has no tail and ends flush by itself.
+ */
+internal fun stranded(page: PageView): Boolean =
+    !page.showsCut && page.count > 0 && page.height > 0 &&
+        page.rows.none { it.index == 0 } && page.rows.none { it.bottom > it.top }
+
 private fun LazyListLayoutInfo.view(cutRow: Boolean = false): PageView {
     val items = visibleItemsInfo.filter { it.contentType != TAIL }
     val rows = items.map { RowSpan(it.index, it.offset - viewportStartOffset, it.offset - viewportStartOffset + it.size) }
@@ -317,6 +344,19 @@ private suspend fun LazyListState.turnBack(cutRow: Boolean = false) {
     val page = layoutInfo.view(cutRow)
     if (page.atStart) return
     scrollBy(-page.height.toFloat())
+    backSnap(layoutInfo.view(cutRow))?.let { scrollToItem(it) }
+}
+
+/**
+ * Back to the last real page from past the end ([stranded]): the tail's top on the foot, so the
+ * last row ends the page, then onto a whole row at the top, as a turn back does.
+ */
+private suspend fun LazyListState.resnap(cutRow: Boolean = false) {
+    scrollToItem((layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+    val info = layoutInfo
+    val tail = info.visibleItemsInfo.lastOrNull { it.contentType == TAIL } ?: return
+    val back = info.view(cutRow).height - (tail.offset - info.viewportStartOffset)
+    if (back > 0) scrollBy(-back.toFloat())
     backSnap(layoutInfo.view(cutRow))?.let { scrollToItem(it) }
 }
 

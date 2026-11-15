@@ -128,4 +128,29 @@ class PagedColumnTest {
         assertEquals(Turn.By(700), forward(p))
         assertNull(p.foot)
     }
+
+    @Test
+    fun aListThatGotShorterUnderThePageIsStranded() {
+        // Level's Settings: on the page that opened with "Forget calibration", which then went.
+        // Only the blank tail is left (no rows), or the row is still there with no height.
+        assertTrue(stranded(page(700, 8)))
+        assertTrue(stranded(page(700, 8, Triple(7, 0, 0))))
+        // Not the first page, nor a page that still shows a row, nor an empty list.
+        assertFalse(stranded(page(700, 8, Triple(7, 0, 240))))
+        assertFalse(stranded(page(700, 8, Triple(6, -40, 0), Triple(7, 0, 120))))
+        assertFalse(stranded(page(700, 8, Triple(0, 0, 0), Triple(1, 0, 0))))
+        assertFalse(stranded(page(700, 0)))
+        // With the cut row shown the list ends flush by itself.
+        assertFalse(stranded(cutPage(700, 8)))
+    }
+
+    @Test
+    fun theLastRealPageIsNotStrandedAndTurnsNoFurther() {
+        // Where the list comes back to: the last row on the foot, a whole row at the top.
+        val p = page(700, 8, Triple(4, 0, 160), Triple(5, 160, 400), Triple(6, 400, 420), Triple(7, 420, 700))
+        assertFalse(stranded(p))
+        assertTrue(p.atEnd)
+        assertEquals(Turn.None, forward(p))
+        assertTrue(p.pages)
+    }
 }
