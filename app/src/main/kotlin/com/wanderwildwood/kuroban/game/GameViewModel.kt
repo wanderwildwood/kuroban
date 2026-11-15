@@ -490,8 +490,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissMessage() = _state.update { it?.copy(message = null) }
 
-    /** A counted game: who won by how much, and which stones were counted as dead. */
-    private class Counted(val score: String, val dead: Set<Point>)
+    /**
+     * What the engine says about a finished game: which stones are dead and which live in
+     * seki. The count itself is [countedScore]'s, not GNU Go's `final_score`.
+     */
+    private class Counted(val dead: Set<Point>, val seki: Set<Point>)
 
     private fun continueAfterHumanMove(active: GnuGo, config: GameConfig, message: String? = null) {
         if (config.opponent == Opponent.COMPUTER) {
@@ -541,8 +544,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
      * Counts the finished game - and if the engine dies counting it, builds another one
      * and asks that.
      *
-     * GNU Go can hit an assertion inside its own scoring code: `findstones` handed a pass
-     * where a stone belongs, in `final_score`. It is not reliable - the same finished
+     * GNU Go can hit an assertion inside its own end-of-game code: `findstones` handed a
+     * pass where a stone belongs, seen in `final_score`, whose playout is also where the
+     * dead-stone list comes from. It is not reliable - the same finished
      * position crashed twice and then counted correctly on the third attempt, and never
      * crashes at all when the same commands are replayed outside the app - which is what
      * makes a retry worth having. Nothing is lost when it happens: every move is known,
@@ -560,8 +564,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         sync(counter, Phase.FINISHED)
         _state.update {
             it?.copy(
-                // The engine counts a board with stones on it; an empty one it only guesses at.
-                result = outcome(countedScore(counted.score, it.black, it.white, it.config.komi)),
+                // The engine says which stones are dead; the board itself is counted here.
+                result = outcome(
+                    countedScore(
+                        black = it.black,
+                        white = it.white,
+                        dead = counted.dead,
+                        seki = counted.seki,
+                        blackCaptures = it.blackCaptures,
+                        whiteCaptures = it.whiteCaptures,
+                        komi = it.config.komi,
+                    ),
+                ),
                 dead = counted.dead,
                 // Two passes and a count is the only way here; resigning and taking a
                 // finished game back both clear this. Without it the dialog never showed
@@ -572,7 +586,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun count(active: GnuGo) = Counted(active.finalScore(), active.deadStones())
+    private fun count(active: GnuGo) = Counted(active.deadStones(), active.sekiStones())
 
     /**
      * A new engine with this game replayed into it, replacing the one that died.

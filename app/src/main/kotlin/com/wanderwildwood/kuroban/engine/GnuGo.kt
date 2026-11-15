@@ -266,10 +266,10 @@ class GnuGo(private val binaryPath: String) {
         null
     }
 
-    /** Something like `B+7.5`, `W+12.5`, or `0` for a draw. */
-    fun finalScore(): String = send("final_score").trim()
-
     fun deadStones(): Set<Point> = send("final_status_list dead").toPoints()
+
+    /** Stones alive only in seki: the empty points between them belong to neither side. */
+    fun sekiStones(): Set<Point> = send("final_status_list seki").toPoints()
 
     fun close() {
         try {

@@ -187,19 +187,65 @@ fun outcome(score: String, resignedBy: Stone? = null): Outcome {
 }
 
 /**
- * The score of a game ended by two passes, in the engine's own notation.
+ * The score of a game ended by two passes, in the engine's own notation (`B+7.5`, `W+0.5`,
+ * or `0` for a draw).
  *
- * The engine's count is the answer whenever there is a stone to count from. With no stone
- * on the board there is nothing to count, and GNU Go's `final_score` then answers with an
- * estimate of how the game would have gone (`B+17.5` on an empty 9x9 board) instead of a
- * count. Nobody holds a point of an empty board, so the komi is all there is: White wins
- * by it, and without a komi the game is a draw.
+ * The engine decides which stones are dead and which sit in seki; the counting is done
+ * here, on the board as it stands. GNU Go's own `final_score` plays the position out
+ * before it counts, and on a sparse board that playout is a guess about a game nobody
+ * played: one black stone in the middle came back as `B+17.5`, and so did an empty board.
+ *
+ * Territory scoring, the engine's rules: each side scores the empty points that touch
+ * only its own living stones (the points under dead stones included), plus the stones it
+ * captured during the game and the dead stones of the other colour; White adds the komi.
+ * An empty region that touches both colours, or none, belongs to nobody, and so does one
+ * that touches a stone in seki.
  */
-fun countedScore(engineScore: String, black: Set<Point>, white: Set<Point>, komi: Double): String {
-    if (black.isNotEmpty() || white.isNotEmpty()) return engineScore
+fun countedScore(
+    black: Set<Point>,
+    white: Set<Point>,
+    dead: Set<Point> = emptySet(),
+    seki: Set<Point> = emptySet(),
+    blackCaptures: Int = 0,
+    whiteCaptures: Int = 0,
+    komi: Double,
+): String {
+    val livingBlack = black - dead
+    val livingWhite = white - dead
+    var blackPoints = blackCaptures + (white intersect dead).size
+    var whitePoints = whiteCaptures + (black intersect dead).size
+
+    val seen = HashSet<Point>()
+    for (col in 0 until BOARD_SIZE) for (row in 0 until BOARD_SIZE) {
+        val origin = Point(col, row)
+        if (origin in livingBlack || origin in livingWhite || !seen.add(origin)) continue
+        var size = 0
+        var touchesBlack = false
+        var touchesWhite = false
+        var touchesSeki = false
+        val queue = ArrayDeque(listOf(origin))
+        while (queue.isNotEmpty()) {
+            val point = queue.removeFirst()
+            size++
+            for (next in point.neighbours()) {
+                when (next) {
+                    in livingBlack -> touchesBlack = true
+                    in livingWhite -> touchesWhite = true
+                    else -> if (seen.add(next)) queue.addLast(next)
+                }
+                if (next in seki) touchesSeki = true
+            }
+        }
+        if (touchesSeki) continue
+        if (touchesBlack && !touchesWhite) blackPoints += size
+        if (touchesWhite && !touchesBlack) whitePoints += size
+    }
+
+    val margin = blackPoints - (whitePoints + komi)
+    val written = kotlin.math.abs(margin).toString().removeSuffix(".0")
     return when {
-        komi > 0.0 -> "W+" + komi.toString().removeSuffix(".0")
-        komi < 0.0 -> "B+" + (-komi).toString().removeSuffix(".0")
+        margin > 0.0 -> "B+$written"
+        margin < 0.0 -> "W+$written"
         else -> "0"
     }
 }

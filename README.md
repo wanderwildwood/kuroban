@@ -71,8 +71,11 @@ GNU Go 3.8 runs as a child process and is spoken to over
 [GTP](https://www.lysator.liu.se/~gunnar/gtp/gtp2-spec-draft2/gtp2-spec.html) on its
 stdin/stdout, the same way Chess+ talks UCI to Stockfish.
 
-The engine is authoritative for *everything*: legality, ko, captures, and scoring. This
-app implements no Go rules of its own - it asks. That is only affordable because GNU Go
+The engine is authoritative for legality, ko, captures, and which stones are dead at the
+end. This app implements no Go rules of its own - it asks. The one thing it does itself is
+the final count: GNU Go's `final_score` plays a sparse position out before counting it and
+reports a guess (one stone on an empty board came back as a 17-point win), so the app takes
+GNU Go's dead stones and counts territory and prisoners on the board as it stands. That is only affordable because GNU Go
 answers a 9x9 position in single-digit milliseconds on this phone, and it means the board
 you see can never disagree with the rules being enforced.
 
