@@ -198,22 +198,7 @@ object DarkMode {
     private fun apply(window: Window) {
         layer(window.decorView, on)
         bars(window, on)
-        toolbar(window, on)
     }
-
-    /**
-     * The platform's Cut/Copy/Paste bar is a window of its own, which the filter does not reach.
-     * It takes its light or dark look from the activity's theme each time it is made, so the
-     * theme is told dark while dark mode is on. Left alone until dark mode is first used.
-     */
-    private fun toolbar(window: Window, dark: Boolean) {
-        val decor = window.decorView
-        if (dark == (decor.getTag(TOOLBAR_KEY) ?: false)) return
-        window.context.theme.applyStyle(if (dark) android.R.style.ThemeOverlay_Material_Dark else android.R.style.ThemeOverlay_Material_Light, true)
-        decor.setTag(TOOLBAR_KEY, dark)
-    }
-
-    private const val TOOLBAR_KEY = 0x7e_da_4b_02
 
     /** Draws [root] and everything in it through the filter, or straight again. */
     private fun layer(root: View, dark: Boolean) {
