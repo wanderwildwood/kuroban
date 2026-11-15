@@ -41,4 +41,25 @@ class ResultTest {
         assertEquals(Outcome.Unrecognised("?"), outcome("?"))
         assertEquals(Outcome.Unrecognised("unfinished"), outcome("unfinished"))
     }
+
+    @Test
+    fun `two passes on an empty board give White the komi and nothing else`() {
+        // What GNU Go answers for an empty 9x9 board with a komi of 6.5.
+        val score = countedScore("B+17.5", black = emptySet(), white = emptySet(), komi = KOMI)
+        assertEquals("W+6.5", score)
+        assertEquals(Outcome.WinBy(Stone.WHITE, "6.5"), outcome(score))
+    }
+
+    @Test
+    fun `an empty board without a komi is a draw`() {
+        assertEquals(Outcome.Draw, outcome(countedScore("B+17.5", emptySet(), emptySet(), komi = 0.0)))
+    }
+
+    @Test
+    fun `a board with a stone on it keeps the engine's count`() {
+        val one = setOf(Point(4, 4))
+        assertEquals("B+74.5", countedScore("B+74.5", black = one, white = emptySet(), komi = KOMI))
+        assertEquals("W+3.5", countedScore("W+3.5", black = one, white = setOf(Point(2, 2)), komi = KOMI))
+        assertEquals("W+80.5", countedScore("W+80.5", black = emptySet(), white = one, komi = HANDICAP_KOMI))
+    }
 }

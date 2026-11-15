@@ -185,3 +185,21 @@ fun outcome(score: String, resignedBy: Stone? = null): Outcome {
         else -> Outcome.WinBy(winner, margin)
     }
 }
+
+/**
+ * The score of a game ended by two passes, in the engine's own notation.
+ *
+ * The engine's count is the answer whenever there is a stone to count from. With no stone
+ * on the board there is nothing to count, and GNU Go's `final_score` then answers with an
+ * estimate of how the game would have gone (`B+17.5` on an empty 9x9 board) instead of a
+ * count. Nobody holds a point of an empty board, so the komi is all there is: White wins
+ * by it, and without a komi the game is a draw.
+ */
+fun countedScore(engineScore: String, black: Set<Point>, white: Set<Point>, komi: Double): String {
+    if (black.isNotEmpty() || white.isNotEmpty()) return engineScore
+    return when {
+        komi > 0.0 -> "W+" + komi.toString().removeSuffix(".0")
+        komi < 0.0 -> "B+" + (-komi).toString().removeSuffix(".0")
+        else -> "0"
+    }
+}

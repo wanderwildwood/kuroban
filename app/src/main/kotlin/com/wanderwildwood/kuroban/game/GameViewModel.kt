@@ -542,7 +542,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         sync(counter, Phase.FINISHED)
         _state.update {
             it?.copy(
-                result = outcome(counted.score),
+                // The engine counts a board with stones on it; an empty one it only guesses at.
+                result = outcome(countedScore(counted.score, it.black, it.white, it.config.komi)),
                 dead = counted.dead,
                 // Two passes and a count is the only way here; resigning and taking a
                 // finished game back both clear this. Without it the dialog never showed
