@@ -14,17 +14,22 @@ import android.widget.Toast
  * a web address on some phones and then crashes, so it counts as no browser. [noBrowser] is the
  * message shown instead, already worded by the caller (it usually carries the address, so that it
  * can be typed in by hand). Never a WebView here.
+ *
+ * A caller with a place to show the message gives [onNone] and shows it there until it is
+ * dismissed: on this panel a Toast can be gone before it has been read (and an address is long).
+ * Without [onNone] it is still a Toast.
  */
-fun openLink(context: Context, url: String, noBrowser: String) {
+fun openLink(context: Context, url: String, noBrowser: String, onNone: ((String) -> Unit)? = null) {
+    val say = onNone ?: { text -> Toast.makeText(context, text, Toast.LENGTH_LONG).show() }
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)
     if (!browserAvailable(context, intent)) {
-        Toast.makeText(context, noBrowser, Toast.LENGTH_LONG).show()
+        say(noBrowser)
         return
     }
     try {
         context.startActivity(intent)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, noBrowser, Toast.LENGTH_LONG).show()
+        say(noBrowser)
     }
 }
 
