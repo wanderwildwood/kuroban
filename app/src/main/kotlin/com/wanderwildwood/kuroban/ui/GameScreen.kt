@@ -264,9 +264,15 @@ fun GameScreen(
  */
 @Composable
 private fun StatusTitle(state: GameState, onPress: (() -> Unit)? = null) {
+    // While setting up, the stone is half of what is said ("[stone] plays first"): a screen reader
+    // gets the whole sentence with its color, not "plays first" alone.
+    val spoken = if (state.phase == Phase.SETUP && state.message == null) {
+        stringResource(if (state.toMove == Stone.WHITE) R.string.cd_white_plays_first else R.string.cd_black_plays_first)
+    } else null
+    val press = if (onPress == null) Modifier else Modifier.clickable(onClick = onPress)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = if (onPress == null) Modifier else Modifier.clickable(onClick = onPress),
+        modifier = if (spoken == null) press else press.semantics(mergeDescendants = true) { contentDescription = spoken },
     ) {
         val turnStone = when (state.phase) {
             Phase.PLAYING, Phase.THINKING, Phase.SETUP -> state.toMove

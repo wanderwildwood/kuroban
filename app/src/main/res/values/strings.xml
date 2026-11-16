@@ -43,6 +43,9 @@
     <string name="status_starting">Starting…</string>
     <!-- Shown beside a stone while setting up a position: "[stone] plays first". Lower case on purpose -->
     <string name="status_plays_first">plays first</string>
+    <!-- Read aloud for the stone and "plays first" above, as one sentence per color -->
+    <string name="cd_black_plays_first">Black plays first</string>
+    <string name="cd_white_plays_first">White plays first</string>
     <string name="status_thinking">Thinking…</string>
     <string name="status_engine_stopped">Engine stopped</string>
     <string name="status_game_over">Game over</string>
