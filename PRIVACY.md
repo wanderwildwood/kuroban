@@ -24,16 +24,22 @@ over a pipe.
 
 ## What is stored, and where
 
-One file, in the app's own private storage, holding the game currently in progress:
+Two small files, in the app's own private storage:
 
 ```
 files/game-in-progress.txt
+files/new-game-choices.txt
 ```
 
-It contains a format version, your four game settings (opponent, difficulty, your color,
-handicap), and the list of moves played so far — for example `E5 D3 pass F4`. It exists so
+The first holds the game currently in progress: a format version, your four game settings
+(opponent, difficulty, your color, handicap), the list of moves played so far — for example
+`E5 D3 pass F4` — and, for a game started from Set up, the stones you placed. It exists so
 that turning your phone off in the middle of a game does not lose the game. It is deleted
 when the game is finished, resigned, or left.
+
+The second holds the choices you last made for a new game (opponent, difficulty, color,
+handicap), so the next new game starts the same way. It stays until you clear the app's
+data or uninstall the app.
 
 Android keeps that directory private to the app. Uninstalling removes it.
 
