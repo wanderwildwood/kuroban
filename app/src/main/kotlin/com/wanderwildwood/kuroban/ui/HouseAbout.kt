@@ -399,7 +399,10 @@ fun HouseAboutDialog(
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 6.dp),
         )
-        PagedColumn(modifier = Modifier.fillMaxWidth().height(room)) {
+        // At most [room], and less where the screen has not that much under the name and over Close
+        // (turned sideways, 16 Nov 2026: Typewriter's Close was squeezed to about 31 dp): the list
+        // gives way and pages, Close keeps its full height.
+        PagedColumn(modifier = Modifier.fillMaxWidth().heightIn(max = room).weight(1f, fill = false)) {
             aboutEntries(entries, data, labels, llamaRes, indent = true, onNotice = say) { pageKey = it }
         }
         Spacer(Modifier.height(14.dp))
