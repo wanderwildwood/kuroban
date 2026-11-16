@@ -112,6 +112,13 @@ import kotlin.math.roundToInt
  * chevron stands over it instead of under it, where a press meant for the next page pressed the
  * button. One 56 dp button on its 16 dp margin is 72 dp. The rows are not moved.
  *
+ * Whether the bar is needed is decided at the rows' full width (16 Nov 2026). The bar takes width
+ * from the rows, so rows that wrap onto more lines beside it can keep needing it: Wallet's Settings,
+ * shrunk by a dialog's keyboard, got the bar, and when the keyboard closed its narrower rows still
+ * ran onto a second page, so the bar and the narrower text stayed. Now, when the list grows (taller
+ * or wider) while the bar is up, the rows are laid out once without it, and the bar comes back only
+ * if they still run past one page.
+ *
  * A list that gets shorter under its page (15 Nov 2026) comes back to its last real page. Level's
  * Settings: turned on to "Forget calibration", then forgotten, the row went and the page was left
  * on the blank tail alone, with no scrollbar and nothing a swipe could turn. The page that ends
@@ -185,6 +192,24 @@ fun PagedColumn(
         snapshotFlow { state.isScrollInProgress }.first { !it }
         if (stranded(state.layoutInfo.view(cutRow))) state.resnap(cutRow)
     }
+    // The bar at full width (see above): while [recheckAt] holds the list's width from before, the
+    // bar is left out until the rows have been laid out wider than that, without it.
+    var recheckAt by remember(state) { mutableStateOf(-1) }
+    val bar = pages && isScrollbarVisible && recheckAt < 0
+    val barNow by rememberUpdatedState(bar)
+    LaunchedEffect(state) {
+        var wide = 0
+        var tall = 0
+        snapshotFlow { state.layoutInfo.viewportSize }.collect { now ->
+            if (recheckAt >= 0) {
+                if (now.width > recheckAt) recheckAt = -1
+            } else if (recheckBar(barNow, wide, tall, now.width, now.height)) {
+                recheckAt = now.width
+            }
+            wide = now.width
+            tall = now.height
+        }
+    }
     Row(
         modifier = (if (onPullAtTop == null) modifier else modifier.pullAtTop(state) { pull?.invoke(); Unit })
             .then(widen)
@@ -233,7 +258,7 @@ fun PagedColumn(
                 if (!showCutRow) item(contentType = TAIL) { Spacer(Modifier.height(tail)) }
             }
         }
-        if (pages && isScrollbarVisible) {
+        if (bar) {
             PageBar(
                 state = state,
                 cutRow = showCutRow,
@@ -383,6 +408,14 @@ internal fun backSnap(page: PageView): Int? {
 internal fun stranded(page: PageView): Boolean =
     !page.showsCut && page.count > 0 && page.height > 0 &&
         page.rows.none { it.index == 0 } && page.rows.none { it.bottom > it.top }
+
+/**
+ * Whether the bar must be decided again at the rows' full width (see [PagedColumn]): it is shown
+ * ([barShown]) and the list has grown, taller or wider, from a size it had been laid out at. A list
+ * that shrinks, or one with no bar, keeps what it has.
+ */
+internal fun recheckBar(barShown: Boolean, wasWidth: Int, wasHeight: Int, width: Int, height: Int): Boolean =
+    barShown && wasWidth > 0 && wasHeight > 0 && (width > wasWidth || height > wasHeight)
 
 private fun LazyListLayoutInfo.view(cutRow: Boolean = false): PageView {
     val items = visibleItemsInfo.filter { it.contentType != TAIL }

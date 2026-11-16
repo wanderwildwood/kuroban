@@ -153,4 +153,20 @@ class PagedColumnTest {
         assertEquals(Turn.None, forward(p))
         assertTrue(p.pages)
     }
+
+    @Test
+    fun aListThatGrowsUnderItsBarIsLaidOutAgainWithoutIt() {
+        // Wallet's Settings: the keyboard closes and the page is taller again.
+        assertTrue(recheckBar(barShown = true, wasWidth = 440, wasHeight = 380, width = 440, height = 640))
+        // Turned sideways, wider.
+        assertTrue(recheckBar(barShown = true, wasWidth = 440, wasHeight = 640, width = 760, height = 360))
+        // No bar: nothing to take back.
+        assertFalse(recheckBar(barShown = false, wasWidth = 440, wasHeight = 380, width = 480, height = 640))
+        // Shrinking (the keyboard coming up, or the bar arriving) leaves the bar as it is decided.
+        assertFalse(recheckBar(barShown = true, wasWidth = 480, wasHeight = 640, width = 440, height = 640))
+        assertFalse(recheckBar(barShown = true, wasWidth = 440, wasHeight = 640, width = 440, height = 380))
+        // The same size again, and the first layout of all (no size before it).
+        assertFalse(recheckBar(barShown = true, wasWidth = 440, wasHeight = 640, width = 440, height = 640))
+        assertFalse(recheckBar(barShown = true, wasWidth = 0, wasHeight = 0, width = 440, height = 640))
+    }
 }
