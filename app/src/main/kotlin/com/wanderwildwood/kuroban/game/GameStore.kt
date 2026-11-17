@@ -20,7 +20,10 @@ class GameStore(private val file: File) {
 
     fun save(config: GameConfig, moves: List<Point?>, seed: Int, editing: Boolean = false) {
         try {
-            file.writeText(
+            // Written beside it and renamed over it, so an app killed mid-write keeps the game
+            // as it was a move ago rather than half of it.
+            val tmp = File(file.parentFile, file.name + ".tmp")
+            tmp.writeText(
                 buildString {
                     appendLine(VERSION)
                     appendLine(
@@ -44,6 +47,7 @@ class GameStore(private val file: File) {
                     }
                 }
             )
+            if (!tmp.renameTo(file)) tmp.delete()
         } catch (_: Exception) {
             // Losing a saved game is a disappointment, not a failure worth crashing over.
         }
