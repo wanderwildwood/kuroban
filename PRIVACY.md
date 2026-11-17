@@ -41,7 +41,15 @@ The second holds the choices you last made for a new game (opponent, difficulty,
 handicap), so the next new game starts the same way. It stays until you clear the app's
 data or uninstall the app.
 
-Android keeps that directory private to the app. Uninstalling removes it.
+A position placed with Set up is handed to GNU Go as a short file, `files/position.sgf`,
+which is deleted as soon as the engine has read it.
+
+Beside the files, Android's preferences for the app keep one setting: whether dark mode is
+on, and Home's dark mode switch as last heard. If Home (`com.wanderwildwood.iori`) is
+installed, Go asks it whether its dark mode switch is on, a yes or no, and sends nothing to
+it.
+
+Android keeps all of it private to the app. Uninstalling removes it.
 
 Nothing else is written. There are no analytics, no crash reporting, no advertising
 identifiers, no logs kept between runs, and no accounts.
