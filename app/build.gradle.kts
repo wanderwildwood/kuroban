@@ -56,10 +56,9 @@ android {
             realSigningConfig?.let { signingConfig = it }
         }
         getByName("release") {
-            // The one thing that differs between a release built here and the one GitHub
-            // publishes: AGP stamps the git revision into META-INF, and the build box works
-            // from an rsync with no .git, so it writes NO_SUPPORTED_VCS_FOUND where the CI
-            // runner writes the commit. Off, so the two have identical contents.
+            // AGP stamps the git revision into META-INF, and the build box works from an
+            // rsync with no .git, so it would write NO_SUPPORTED_VCS_FOUND there. Off, so a
+            // release's contents depend on its source alone.
             vcsInfo {
                 include = false
             }
