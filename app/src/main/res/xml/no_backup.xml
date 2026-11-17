@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Nothing of this app goes into a cloud backup or a phone-to-phone transfer; the app's own backup file is the only way to move its data. -->
+<!-- Nothing of this app goes into a cloud backup or a phone-to-phone transfer: what it keeps is a game in progress and the last new-game choices. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" />
