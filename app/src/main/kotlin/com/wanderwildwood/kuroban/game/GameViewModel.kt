@@ -474,10 +474,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 repeat(steps) { active.undo() }
                 repeat(steps) { moves.removeLastOrNull() }
                 movesPlayed -= steps
-                // Whether the passes that ended the game are still on the board is no
-                // longer knowable cheaply; zero is the safe answer, since its only cost
-                // is that a game being closed out needs its two passes played again.
-                consecutivePasses = 0
+                // Counted again from what is left, as a restart would count it.
+                consecutivePasses = moves.reversed().takeWhile { it == null }.count()
                 _state.update { it?.copy(result = null, dead = emptySet(), wasScored = false, message = null) }
                 sync(active, Phase.PLAYING)
             } catch (e: Exception) {
@@ -526,6 +524,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             EngineMove.Resign -> {
+                // A won game is not resumed on the next start, as finish() and resign() see to.
+                store.clear()
                 _state.update { current ->
                     current ?: return@update null
                     current.copy(

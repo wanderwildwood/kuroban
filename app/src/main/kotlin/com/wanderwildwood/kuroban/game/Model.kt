@@ -146,10 +146,12 @@ data class GameState(
 
     /**
      * Against the computer, taking back your move means taking back its reply too -
-     * otherwise you would just be handing it a free move.
+     * otherwise you would just be handing it a free move. When the game ended on your
+     * move (you passed after its pass, or it resigned in reply), only your move goes, so
+     * the board comes back to you rather than to a computer nobody asks to move.
      */
     val movesPerUndo: Int
-        get() = if (config.opponent == Opponent.COMPUTER) 2 else 1
+        get() = if (config.opponent == Opponent.COMPUTER && toMove == config.humanColor) 2 else 1
 }
 
 /** How a game ended, as the game-over dialog says it. The screen puts the words to it. */
