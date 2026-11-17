@@ -351,6 +351,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val config = _state.value?.config ?: return
         writePosition(positionFile, black, white, firstToMove, config.komi)
         active.loadPosition(positionFile, config.komi, config.difficulty.level)
+        // Read by the engine at once; nothing on disk outlives the game (PRIVACY.md).
+        runCatching { positionFile.delete() }
     }
 
     fun confirmMove() {
@@ -608,6 +610,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (config.setup != null) {
             writePosition(positionFile, setupBlack, setupWhite, firstToMove, config.komi)
             fresh.loadPosition(positionFile, config.komi, config.difficulty.level)
+            // Read by the engine at once; nothing on disk outlives the game (PRIVACY.md).
+            runCatching { positionFile.delete() }
         }
         moves.forEachIndexed { index, move -> fresh.play(colourOf(index), move) }
         engine = fresh
