@@ -272,12 +272,14 @@ class GnuGo(private val binaryPath: String) {
     fun sekiStones(): Set<Point> = send("final_status_list seki").toPoints()
 
     fun close() {
+        // Destroyed first: a genmove still running holds the lock send() takes, and only the
+        // process going away ends its wait (the reader gets the end of the stream).
+        process?.destroy()
         try {
             send("quit")
         } catch (_: Exception) {
-            // Already gone, or wedged - either way we are about to destroy it.
+            // Gone, as it should be.
         }
-        process?.destroy()
         process = null
         reader = null
         writer = null

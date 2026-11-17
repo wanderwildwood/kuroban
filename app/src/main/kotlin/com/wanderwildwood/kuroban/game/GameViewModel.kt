@@ -270,7 +270,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     sync(active, Phase.SETUP)
                 }
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -290,7 +290,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 loadSetup(active)
                 sync(active, Phase.SETUP)
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -317,7 +317,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     sync(active, Phase.PLAYING)
                 }
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -371,7 +371,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 consecutivePasses = 0
                 continueAfterHumanMove(active, current.config)
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -408,7 +408,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     continueAfterHumanMove(active, current.config, message = said)
                 }
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -436,7 +436,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -481,7 +481,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update { it?.copy(result = null, dead = emptySet(), wasScored = false, message = null) }
                 sync(active, Phase.PLAYING)
             } catch (e: Exception) {
-                broken(e)
+                broken(e, active)
             } finally {
                 moveInFlight.set(false)
             }
@@ -506,7 +506,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun computerTurn(active: GnuGo) {
-        when (val move = active.genMove(toMove)) {
+        val move = active.genMove(toMove)
+        // A new game began while GNU Go was thinking: this move belongs to the old one.
+        if (engine !== active) return
+        when (move) {
             is EngineMove.Play -> {
                 movesPlayed++
                 moves += move.point
@@ -658,8 +661,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun broken(cause: Exception) {
+    /**
+     * The engine failed. [from] is the engine the failing work was done with: if a new game
+     * has replaced it since, the failure is the old game's (its engine closed under it) and
+     * the new game is left alone.
+     */
+    private fun broken(cause: Exception, from: GnuGo? = null) {
+        if (from != null && engine !== from) {
+            runCatching { from.close() }
+            return
+        }
+        val dead = engine
         engine = null
+        runCatching { dead?.close() }
         _state.update {
             it?.copy(
                 phase = Phase.BROKEN,
