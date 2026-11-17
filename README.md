@@ -92,10 +92,7 @@ Needs the Android SDK, and the NDK plus a host C compiler if you are rebuilding 
 ./gradlew assembleRelease
 ```
 
-Releases are built by `.github/workflows/release.yml` on a `v*` tag. It refuses to build
-without the signing secret, rebuilds the engine from the vendored tarball rather than
-trusting the committed binary, and checks the finished APK carries the expected signing
-certificate before publishing it.
+Releases are built locally and uploaded by hand; nothing on GitHub builds or signs them.
 
 Release builds are signed with a keystore in `signing/`, which is gitignored. There is no
 fallback: without it `assembleRelease` produces an *unsigned* APK, which will not install
