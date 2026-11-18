@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -216,19 +217,13 @@ private fun InfoButton(onClick: () -> Unit) {
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.size(22.dp)) {
-            val stroke = 2.dp.toPx()
-            val radius = size.minDimension / 2f - stroke / 2f
-            val middle = Offset(size.width / 2f, size.height / 2f)
-            drawCircle(ink, radius = radius, center = middle, style = Stroke(stroke))
-            drawCircle(ink, radius = stroke * 0.7f, center = Offset(middle.x, size.height * 0.28f))
-            drawLine(
-                ink,
-                Offset(middle.x, size.height * 0.44f),
-                Offset(middle.x, size.height * 0.74f),
-                stroke,
-            )
-        }
+        // The house Info icon (Material Symbols), 22 dp in a 48 dp box, as in every other app.
+        Icon(
+            imageVector = Icons.Info,
+            contentDescription = null,
+            tint = ink,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 

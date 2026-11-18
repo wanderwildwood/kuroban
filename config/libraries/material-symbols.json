@@ -1,0 +1,8 @@
+{
+  "uniqueId": "material-symbols",
+  "name": "Material Symbols icons",
+  "description": "Icons drawn from Google's Material Symbols set, kept in the app as their path data (ui/Icons.kt).",
+  "developers": [{ "name": "Google" }],
+  "website": "https://fonts.google.com/icons",
+  "licenses": ["Apache-2.0"]
+}
