@@ -169,4 +169,28 @@ class PagedColumnTest {
         assertFalse(recheckBar(barShown = true, wasWidth = 440, wasHeight = 640, width = 440, height = 640))
         assertFalse(recheckBar(barShown = true, wasWidth = 0, wasHeight = 0, width = 440, height = 640))
     }
+
+    @Test
+    fun aTapOnTheBarJumpsToTheRowUnderIt() {
+        // 100 rows, 10 whole on a page, a bar 1000 px tall: the slider is 100 px, its middle comes to the tap.
+        assertEquals(0, jumpTarget(50f, 1000, 10, 100))
+        assertEquals(45, jumpTarget(500f, 1000, 10, 100))
+        assertEquals(95, jumpTarget(1000f, 1000, 10, 100))
+        // Above the top and past the foot stay on the list.
+        assertEquals(0, jumpTarget(-20f, 1000, 10, 100))
+        assertEquals(99, jumpTarget(1400f, 1000, 10, 100))
+        // No rows, or no bar yet: nowhere to go.
+        assertNull(jumpTarget(500f, 1000, 1, 0))
+        assertNull(jumpTarget(500f, 0, 10, 100))
+    }
+
+    @Test
+    fun aTapAfterATurnUsesThePageAsItIsNow() {
+        // The same tap with the same count lands elsewhere once fewer rows are whole on the page:
+        // the handler is given the page as it is at the tap, not as it was when the bar was drawn.
+        val before = jumpTarget(500f, 1000, 10, 100)
+        val after = jumpTarget(500f, 1000, 2, 100)
+        assertEquals(45, before)
+        assertEquals(49, after)
+    }
 }

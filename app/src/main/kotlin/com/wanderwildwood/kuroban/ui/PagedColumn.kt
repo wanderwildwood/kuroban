@@ -417,6 +417,16 @@ internal fun stranded(page: PageView): Boolean =
 internal fun recheckBar(barShown: Boolean, wasWidth: Int, wasHeight: Int, width: Int, height: Int): Boolean =
     barShown && wasWidth > 0 && wasHeight > 0 && (width > wasWidth || height > wasHeight)
 
+/**
+ * The row a tap at [y] on the scrollbar ([height] pixels) jumps to, with [visible] rows whole on
+ * the page and [count] rows in all: the slider's middle comes to the tap. Null with no rows.
+ */
+internal fun jumpTarget(y: Float, height: Int, visible: Int, count: Int): Int? {
+    if (count <= 0 || height <= 0) return null
+    val slider = height * visible / count
+    return ((y - slider / 2) / height * count).toInt().coerceIn(0, count - 1)
+}
+
 private fun LazyListLayoutInfo.view(cutRow: Boolean = false): PageView {
     val items = visibleItemsInfo.filter { it.contentType != TAIL }
     val rows = items.map { RowSpan(it.index, it.offset - viewportStartOffset, it.offset - viewportStartOffset + it.size) }
@@ -494,16 +504,19 @@ private fun PageBar(
         val whole = page.whole
         val visible = whole.size.coerceAtLeast(1)
         val first = whole.firstOrNull()?.index ?: page.rows.firstOrNull()?.index ?: 0
+        // The tap handler is set up once; it reads the page as it is now, not as it was when the
+        // bar was first drawn (a turn changes how many rows are whole on the page, not the count).
+        val shownNow by rememberUpdatedState(visible)
+        val countNow by rememberUpdatedState(page.count)
+        val jump by rememberUpdatedState(onJump)
         Canvas(
             modifier = Modifier
                 .width(8.dp)
                 .weight(1f)
                 .border(width = 1.dp, color = sliderColor, shape = RoundedCornerShape(4.dp))
-                .pointerInput(page.count) {
+                .pointerInput(Unit) {
                     detectTapGestures { offset ->
-                        val slider = size.height * visible / page.count
-                        val target = ((offset.y - slider / 2) / size.height * page.count).toInt().coerceIn(0, page.count - 1)
-                        onJump(target)
+                        jumpTarget(offset.y, size.height, shownNow, countNow)?.let { jump(it) }
                     }
                 },
         ) {
