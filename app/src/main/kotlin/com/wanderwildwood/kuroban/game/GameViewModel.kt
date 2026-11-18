@@ -112,11 +112,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _state.value = GameState(config = config, phase = Phase.STARTING)
 
         viewModelScope.launch(Dispatchers.IO) {
+            var restored: GnuGo? = null
             try {
                 val fresh = GnuGo(binaryPath).apply {
                     start(config.difficulty.level, config.komi, config.handicap, seed)
                 }
                 engine = fresh
+                restored = fresh
                 // The hand-placed stones go down before anything played on top of them.
                 if (config.setup != null) loadSetup(fresh)
                 if (saved.editing) {
@@ -144,6 +146,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     else -> sync(fresh, Phase.PLAYING)
                 }
             } catch (e: Exception) {
+                // A new game replaced this one while it was being counted: the save and the
+                // screen are the new game's now, and the failure is the old game's to drop.
+                if (restored != null && engine !== restored) {
+                    broken(e, restored)
+                    return@launch
+                }
                 // A save that will not replay is worse than none: drop it rather than
                 // meet the player with the same failure every time they open the app.
                 store.clear()
