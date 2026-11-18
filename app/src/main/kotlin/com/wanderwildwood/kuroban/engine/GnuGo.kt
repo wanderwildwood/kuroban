@@ -111,12 +111,19 @@ class GnuGo(private val binaryPath: String) {
             }
         }.apply { isDaemon = true }.also { it.start() }
 
-        send("boardsize $BOARD_SIZE")
-        send("clear_board")
-        send("komi $komi")
-        send("level $level")
-        // Places the stones on the star points and leaves White to open.
-        if (handicap >= 2) send("fixed_handicap $handicap")
+        // An engine that refuses its set-up is stopped here: nobody else holds it yet, so
+        // left running it would stay for as long as the app does.
+        try {
+            send("boardsize $BOARD_SIZE")
+            send("clear_board")
+            send("komi $komi")
+            send("level $level")
+            // Places the stones on the star points and leaves White to open.
+            if (handicap >= 2) send("fixed_handicap $handicap")
+        } catch (e: Exception) {
+            close()
+            throw e
+        }
     }
 
     /**
