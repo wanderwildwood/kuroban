@@ -40,6 +40,8 @@ already ships with, with GNU Go bundled as the engine.
   which stones are dead. Those are marked with a × on the board.
 - It keeps the game you were in the middle of. Turn the phone off mid-game and it comes
   back, undo history included.
+- Dark mode, following the phone's dark setting or Home's dark switch; a black stone stays
+  black and a white one white.
 - No permissions and no network. Nothing leaves the phone, because there is no route off
   it. See [PRIVACY.md](PRIVACY.md).
 
