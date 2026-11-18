@@ -561,15 +561,35 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
      * makes a retry worth having. Nothing is lost when it happens: every move is known,
      * so a fresh engine can be handed the whole game and asked again.
      *
-     * A second failure falls through to the caller, which reports it and stops.
+     * A second failure is reported and the game stops there. [active] stays the game's
+     * engine until its replacement has started and been handed the game, so a failure
+     * while building that replacement reaches the caller's broken() as this game's; once
+     * the replacement holds the game, its own failures are reported here, as its own.
      */
     private fun finish(active: GnuGo) {
         store.clear()
-        val first = runCatching { count(active) }
-        val (counter, counted) = when {
-            first.isSuccess -> active to first.getOrThrow()
-            else -> rebuiltEngine().let { it to count(it) }
+        val counted = try {
+            count(active)
+        } catch (e: Exception) {
+            // A new game replaced this one while it was being counted, and closed the
+            // engine under it: the failure is the old game's, which the caller drops.
+            if (engine !== active) throw e
+            null
         }
+        if (counted != null) {
+            finished(active, counted)
+            return
+        }
+        val fresh = rebuiltEngine(active)
+        try {
+            finished(fresh, count(fresh))
+        } catch (e: Exception) {
+            broken(e, fresh)
+        }
+    }
+
+    /** Shows the finished game as [counter] has it, with [counted]'s dead stones taken off. */
+    private fun finished(counter: GnuGo, counted: Counted) {
         sync(counter, Phase.FINISHED)
         _state.update {
             it?.copy(
@@ -604,18 +624,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
      * what gets counted, so a different seed costs nothing and does not walk the engine
      * back down whichever path it fell off.
      */
-    private fun rebuiltEngine(): GnuGo {
+    private fun rebuiltEngine(died: GnuGo): GnuGo {
         val config = _state.value?.config ?: throw IllegalStateException("No game to count")
-        runCatching { engine?.close() }
-        engine = null
+        runCatching { died.close() }
         seed = newSeed()
+        // start() stops an engine that refuses its set-up itself.
         val fresh = GnuGo(binaryPath).apply {
             start(config.difficulty.level, config.komi, config.handicap, seed)
         }
-        // Same as anywhere else the game is rebuilt: the stones that were placed by hand
-        // are the board the moves were played on, so they go down before the moves do.
-        if (config.setup != null) loadSetup(fresh)
-        moves.forEachIndexed { index, move -> fresh.play(colourOf(index), move) }
+        try {
+            // Same as anywhere else the game is rebuilt: the stones that were placed by hand
+            // are the board the moves were played on, so they go down before the moves do.
+            if (config.setup != null) loadSetup(fresh)
+            moves.forEachIndexed { index, move -> fresh.play(colourOf(index), move) }
+        } catch (e: Exception) {
+            runCatching { fresh.close() }
+            throw e
+        }
+        // A new game began while this one was being rebuilt: the new game keeps its own
+        // engine, and the caller drops this failure as the old game's.
+        if (engine !== died) {
+            runCatching { fresh.close() }
+            throw IllegalStateException("A new game replaced the one being counted")
+        }
         engine = fresh
         return fresh
     }
