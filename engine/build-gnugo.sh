@@ -144,6 +144,11 @@ mkdir -p "$OUT"
 "$CC" -o "$OUT/libgnugo.so" "${objs[@]}" -lm
 "$STRIP" "$OUT/libgnugo.so"
 
+# The engine's hash is recorded beside the tarball's, and a unit test holds the committed
+# libgnugo.so to it: a changed engine has to come with a changed record, in the same commit.
+(cd "$OUT" && sha256sum libgnugo.so) > "$HERE/libgnugo.so.sha256"
+
 ls -la "$OUT/libgnugo.so"
 file "$OUT/libgnugo.so" 2>/dev/null || true
+cat "$HERE/libgnugo.so.sha256"
 echo "==> Done"
