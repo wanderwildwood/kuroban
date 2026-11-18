@@ -133,7 +133,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val owedAMove = config.opponent == Opponent.COMPUTER &&
                     toMove != config.humanColor
                 when {
-                    consecutivePasses >= 2 -> finish(fresh)
+                    // A game whose count failed last time gets this one more try.
+                    consecutivePasses >= 2 -> finish(fresh, lastTry = true)
                     // Killed while the engine was thinking: it still owes its reply.
                     owedAMove -> {
                         sync(fresh, Phase.THINKING)
@@ -561,13 +562,20 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
      * makes a retry worth having. Nothing is lost when it happens: every move is known,
      * so a fresh engine can be handed the whole game and asked again.
      *
+     * The saved game is kept until a count works, with both passes in it, so a game that
+     * could not be counted is replayed and counted again on the next start. That is its
+     * [lastTry]: if that fails as well the save is dropped, so the same failure does not
+     * meet the player on every start.
+     *
      * A second failure is reported and the game stops there. [active] stays the game's
      * engine until its replacement has started and been handed the game, so a failure
      * while building that replacement reaches the caller's broken() as this game's; once
      * the replacement holds the game, its own failures are reported here, as its own.
      */
-    private fun finish(active: GnuGo) {
-        store.clear()
+    private fun finish(active: GnuGo, lastTry: Boolean = false) {
+        // The last pass has not been saved yet: without it the next start would not know
+        // the game had ended.
+        if (engine === active) persist()
         val counted = try {
             count(active)
         } catch (e: Exception) {
@@ -577,15 +585,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             null
         }
         if (counted != null) {
+            forgetCounted(active)
             finished(active, counted)
             return
         }
-        val fresh = rebuiltEngine(active)
-        try {
-            finished(fresh, count(fresh))
+        val fresh = try {
+            rebuiltEngine(active)
         } catch (e: Exception) {
+            if (lastTry && engine === active) store.clear()
+            throw e
+        }
+        try {
+            val recounted = count(fresh)
+            forgetCounted(fresh)
+            finished(fresh, recounted)
+        } catch (e: Exception) {
+            if (lastTry && engine === fresh) store.clear()
             broken(e, fresh)
         }
+    }
+
+    /** A counted game is not resumed on the next start - unless a new game has its own save by now. */
+    private fun forgetCounted(counter: GnuGo) {
+        if (engine === counter) store.clear()
     }
 
     /** Shows the finished game as [counter] has it, with [counted]'s dead stones taken off. */
@@ -680,8 +702,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         // Saving here rather than at each call site means no new way of ending a move can
-        // forget to do it. A finished or broken game is not saved - and finish() and
-        // resign() clear the file outright, so opening the app lands on a new game.
+        // forget to do it. A finished or broken game is not saved - and resign() and a
+        // finished game's count clear the file, so opening the app lands on a new game.
+        // finish() keeps it until the count works, so an uncounted game gets one more try.
         when (phase) {
             Phase.PLAYING, Phase.THINKING -> persist()
             // A position half placed is worth keeping too. Copying a problem out of a

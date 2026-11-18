@@ -35,7 +35,8 @@ The first holds the game currently in progress: a format version, your four game
 (opponent, difficulty, your color, handicap), the list of moves played so far — for example
 `E5 D3 pass F4` — and, for a game started from Set up, the stones you placed. It exists so
 that turning your phone off in the middle of a game does not lose the game. It is deleted
-when the game is finished, resigned, or left.
+when the game is finished, resigned, or left. If GNU Go fails to count a finished game, the
+file is kept for one more try the next time Go starts, and deleted after that try either way.
 
 The second holds the choices you last made for a new game (opponent, difficulty, color,
 handicap), so the next new game starts the same way. It stays until you clear the app's
