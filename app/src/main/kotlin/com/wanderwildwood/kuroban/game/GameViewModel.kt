@@ -350,9 +350,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         val config = _state.value?.config ?: return
         writePosition(positionFile, black, white, firstToMove, config.komi)
-        active.loadPosition(positionFile, config.komi, config.difficulty.level)
-        // Read by the engine at once; nothing on disk outlives the game (PRIVACY.md).
-        runCatching { positionFile.delete() }
+        try {
+            active.loadPosition(positionFile, config.komi, config.difficulty.level)
+        } finally {
+            // Read by the engine at once, or refused by it: either way nothing on disk
+            // outlives the game (PRIVACY.md).
+            runCatching { positionFile.delete() }
+        }
     }
 
     fun confirmMove() {
@@ -610,12 +614,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         // Same as anywhere else the game is rebuilt: the stones that were placed by hand
         // are the board the moves were played on, so they go down before the moves do.
-        if (config.setup != null) {
-            writePosition(positionFile, setupBlack, setupWhite, firstToMove, config.komi)
-            fresh.loadPosition(positionFile, config.komi, config.difficulty.level)
-            // Read by the engine at once; nothing on disk outlives the game (PRIVACY.md).
-            runCatching { positionFile.delete() }
-        }
+        if (config.setup != null) loadSetup(fresh)
         moves.forEachIndexed { index, move -> fresh.play(colourOf(index), move) }
         engine = fresh
         return fresh
