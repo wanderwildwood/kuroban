@@ -193,4 +193,32 @@ class PagedColumnTest {
         assertEquals(45, before)
         assertEquals(49, after)
     }
+
+    @Test
+    fun aRowTallerThanThePageGetsAThumbMeasuredInPixels() {
+        // One 3000 px row on a 600 px page, bar 1000 px: the thumb is a fifth of the bar.
+        fun at(top: Int) = thumb(1000f, page(600, 1, Triple(0, top, top + 3000)), 1, 0)
+        val start = at(0)
+        assertEquals(200f, start.height, 0.01f)
+        assertEquals(0f, start.offset, 0.01f)
+        assertTrue(start.filled)
+        // Scrolled to the middle of its 2400 px of travel, and to the end.
+        assertEquals(400f, at(-1200).offset, 0.01f)
+        assertEquals(800f, at(-2400).offset, 0.01f)
+        // Past the end it stays on the bar.
+        assertEquals(800f, at(-2600).offset, 0.01f)
+    }
+
+    @Test
+    fun aListOfSeveralRowsKeepsItsRowCountThumb() {
+        val p = page(700, 20, Triple(5, 0, 350), Triple(6, 350, 700))
+        val t = thumb(1000f, p, 2, 5)
+        assertEquals(100f, t.height, 0.01f)
+        assertEquals(5f / 18f * 900f, t.offset, 0.01f)
+        assertTrue(t.filled)
+        // Everything on one page: nothing drawn.
+        assertFalse(thumb(1000f, page(700, 2, Triple(0, 0, 300), Triple(1, 300, 600)), 2, 0).filled)
+        // One short row is not a tall row.
+        assertFalse(thumb(1000f, page(700, 1, Triple(0, 0, 300)), 1, 0).filled)
+    }
 }

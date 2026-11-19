@@ -427,6 +427,31 @@ internal fun jumpTarget(y: Float, height: Int, visible: Int, count: Int): Int? {
     return ((y - slider / 2) / height * count).toInt().coerceIn(0, count - 1)
 }
 
+/** The scrollbar's thumb: its [height] and [offset] in pixels on a bar [barHeight] pixels tall, and whether it is [filled] (drawn). */
+internal data class Thumb(val height: Float, val offset: Float, val filled: Boolean)
+
+/**
+ * Where the thumb sits. Normally it counts rows: [visible] whole rows of [PageView.count], the page
+ * starting at row [first]. A list that is one row taller than the page (a reader-style screen, read
+ * a page at a time) has nothing to count, so the thumb is measured in pixels: the page's share of
+ * the row's height, placed by how far the row has been scrolled (the row's top is negative then).
+ */
+internal fun thumb(barHeight: Float, page: PageView, visible: Int, first: Int): Thumb {
+    val tall = page.rows.singleOrNull()?.takeIf { page.count == 1 && it.bottom - it.top > page.height }
+    val tallLength = tall?.let { (it.bottom - it.top).toFloat() }
+    val height = (
+        if (tallLength != null) barHeight * page.height / tallLength
+        else barHeight * visible / page.count
+    ).coerceAtLeast(max(barHeight * 0.05f, 16f))
+    val maxOffset = (barHeight - height).coerceAtLeast(0f)
+    val denominator = (page.count - visible).coerceAtLeast(1)
+    val offset = (
+        if (tall != null && tallLength != null) -tall.top / (tallLength - page.height) * maxOffset
+        else first.toFloat() / denominator * maxOffset
+    ).coerceIn(0f, maxOffset)
+    return Thumb(height, offset, filled = tall != null || visible < page.count)
+}
+
 private fun LazyListLayoutInfo.view(cutRow: Boolean = false): PageView {
     val items = visibleItemsInfo.filter { it.contentType != TAIL }
     val rows = items.map { RowSpan(it.index, it.offset - viewportStartOffset, it.offset - viewportStartOffset + it.size) }
@@ -520,16 +545,13 @@ private fun PageBar(
                     }
                 },
         ) {
-            val sliderHeight = (size.height * visible / page.count).coerceAtLeast(max(size.height * 0.05f, 16f))
-            val maxOffset = (size.height - sliderHeight).coerceAtLeast(0f)
-            val denominator = (page.count - visible).coerceAtLeast(1)
-            val sliderOffset = (first.toFloat() / denominator * maxOffset).coerceIn(0f, maxOffset)
+            val thumb = thumb(size.height, page, visible, first)
             val corner = CornerRadius(size.width / 2, size.width / 2)
             drawRoundRect(color = containerColor, topLeft = Offset.Zero, size = Size(size.width, size.height), cornerRadius = corner)
             drawRoundRect(
-                color = if (visible >= page.count) containerColor else sliderColor,
-                topLeft = Offset(0f, sliderOffset),
-                size = Size(size.width, sliderHeight),
+                color = if (thumb.filled) sliderColor else containerColor,
+                topLeft = Offset(0f, thumb.offset),
+                size = Size(size.width, thumb.height),
                 cornerRadius = corner,
             )
         }
