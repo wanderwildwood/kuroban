@@ -48,7 +48,7 @@ which is deleted as soon as the engine has read it.
 Beside the files, Android's preferences for the app keep one setting: whether dark mode is
 on, and Home's dark mode switch as last heard. If Home (`com.wanderwildwood.iori`) is
 installed, Go asks it whether its dark mode switch is on, a yes or no, and sends nothing to
-it.
+it. The app can also see which browsers the phone has, so a link in About opens in a real one. It sends them nothing.
 
 Android keeps all of it private to the app. Uninstalling removes it.
 
