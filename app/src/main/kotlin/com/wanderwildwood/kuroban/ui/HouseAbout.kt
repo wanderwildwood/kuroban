@@ -40,6 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -341,6 +346,51 @@ fun aboutParagraphs(items: List<AboutItem>): List<AboutItem> = items.flatMap { i
     if (parts.size <= 1) listOf(item) else parts.mapIndexed { i, p -> item.copy(key = "${item.key}/$i", text = p) }
 }
 
+/**
+ * Where to cut a paragraph taller than a page: runs of its lines, each at most [room] pixels tall,
+ * so every page holds whole lines. (22 Nov 2026: a paragraph taller than the page was turned a
+ * page height at a time, by pixels, and a page could open on the bottom half of a line.)
+ * [lineBottoms] is each line's bottom, measured from the paragraph's top; [gap] is the space
+ * above each run (a later run opens its page with the same gap under the heading as the first).
+ * Every run holds at least one line.
+ */
+fun aboutLineGroups(lineBottoms: List<Float>, gap: Float, room: Float): List<IntRange> {
+    val groups = mutableListOf<IntRange>()
+    var start = 0
+    var top = 0f
+    while (start < lineBottoms.size) {
+        val limit = room - gap
+        var end = start
+        while (end + 1 < lineBottoms.size && lineBottoms[end + 1] - top <= limit) end++
+        groups.add(start..end)
+        top = lineBottoms[end]
+        start = end + 1
+    }
+    return groups
+}
+
+/**
+ * A page's rows with every paragraph that is taller than the page ([room] pixels, [gap] above a
+ * paragraph) cut into runs of whole lines ([aboutLineGroups]), laid out as the page draws them:
+ * [style] at [width] pixels. A paragraph that fits keeps its row and its key.
+ */
+private fun aboutFitPage(items: List<AboutItem>, measurer: TextMeasurer, style: TextStyle, width: Int, room: Float, gap: Float): List<AboutItem> =
+    items.flatMap { item ->
+        if (item !is AboutItem.Text) return@flatMap listOf(item)
+        val layout = measurer.measure(
+            item.text,
+            style = if (item.bold) style.copy(fontWeight = FontWeight.Bold) else style,
+            constraints = Constraints(maxWidth = width),
+        )
+        if (layout.size.height + gap <= room || layout.lineCount < 2) return@flatMap listOf(item)
+        val groups = aboutLineGroups((0 until layout.lineCount).map { layout.getLineBottom(it) }, gap, room)
+        groups.mapIndexed { i, lines ->
+            val from = layout.getLineStart(lines.first)
+            val to = layout.getLineEnd(lines.last)
+            item.copy(key = "${item.key}#$i", text = item.text.substring(from, to).trim())
+        }
+    }
+
 /** Where Close or Back on the page [key] leads: a library's page to Licenses, any other to the dialog (null). */
 fun aboutPageParent(key: String): String? = if (key.startsWith("lic/")) ABOUT_LICENCES_KEY else null
 
@@ -420,8 +470,22 @@ fun HouseAboutDialog(
             // A full-screen list is not padded as a whole: the text is, so the bar sits at the
             // screen's edge (STYLE.md). Each page starts at its top; Licenses keeps its place.
             key(page.key) {
+                // A paragraph taller than the page is cut into runs of whole lines (aboutFitPage), so a
+                // turn never opens on half a line. That needs the width the text is really laid out at,
+                // which the bar beside it decides: a text row reports it, and the list its height.
+                var textWidth by remember { mutableStateOf(0) }
+                var listHeight by remember { mutableStateOf(0) }
+                val measurer = rememberTextMeasurer()
+                val body = aboutBody()
+                val gap = with(LocalDensity.current) { PAGE_PARAGRAPH_GAP.toPx() }
+                val rows = remember(page.items, textWidth, listHeight, body) {
+                    // A pixel to spare: the list's own check is "bottom <= height", and a run that ends
+                    // a hair over the foot would be sent whole to the next page with room left above.
+                    if (textWidth <= 0 || listHeight <= 0) page.items
+                    else aboutFitPage(page.items, measurer, body, textWidth, listHeight - 2f, gap)
+                }
                 PagedColumn(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f).onSizeChanged { listHeight = it.height },
                     state = if (page.key == ABOUT_LICENCES_KEY) licencesList else rememberLazyListState(),
                     contentPadding = PaddingValues(start = PAGE_SIDE, end = 12.dp),
                 ) {
@@ -430,7 +494,7 @@ fun HouseAboutDialog(
                             TextMMD(text = line, style = aboutBody(), modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
                         }
                     }
-                    aboutEntries(page.items, data, labels, llamaRes, indent = false, onNotice = say) { pageKey = it }
+                    aboutEntries(rows, data, labels, llamaRes, indent = false, onNotice = say, onTextWidth = { textWidth = it }) { pageKey = it }
                 }
             }
             HouseButton(
@@ -487,6 +551,7 @@ private fun LazyListScope.aboutEntries(
     llamaRes: Int,
     indent: Boolean,
     onNotice: (String) -> Unit,
+    onTextWidth: ((Int) -> Unit)? = null,
     onOpen: (String) -> Unit,
 ) {
     // The site's address and the llama are two rows of the list, so a page can end between them.
@@ -506,7 +571,13 @@ private fun LazyListScope.aboutEntries(
                 // On a page a paragraph is a row. The gap between two is all above the paragraph, none
                 // below: a paragraph whose last line just fits the page is not sent to the next one
                 // for the sake of empty space under it.
-                modifier = Modifier.fillMaxWidth().padding(start = if (indent) INDENT * item.depth else 0.dp, top = if (indent) 4.dp else 12.dp, bottom = if (indent) 4.dp else 0.dp),
+                modifier = Modifier.fillMaxWidth()
+                    .then(if (onTextWidth != null) Modifier.onSizeChanged { onTextWidth(it.width) } else Modifier)
+                    .padding(
+                        start = if (indent) INDENT * item.depth else 0.dp,
+                        top = if (indent) 4.dp else PAGE_PARAGRAPH_GAP,
+                        bottom = if (indent) 4.dp else 0.dp,
+                    ),
             )
             is AboutItem.Link -> AboutLine(item.label, depth = if (indent) item.depth else 0) {
                 openLink(context, item.url, labels.noBrowser(aboutAddress(item.url)), onNotice)
@@ -536,6 +607,9 @@ private val INDENT = 14.dp
 
 /** A page's side padding: the text's, not the list's (the bar sits at the screen's edge). */
 private val PAGE_SIDE = 20.dp
+
+/** The space above a paragraph on a page (none below; see aboutEntries). */
+private val PAGE_PARAGRAPH_GAP = 12.dp
 
 /** The About's reading size and its line, in sp (15 Nov 2026, InkApps review: about 18 sp for body text). */
 const val ABOUT_BODY_SP: Float = 18f

@@ -221,4 +221,37 @@ class HouseAboutTest {
         assertTrue(problems.any { it.contains("not https") })
         assertTrue(problems.any { it.contains("twice") })
     }
+
+    // 22 Nov 2026: a paragraph taller than the page is cut into runs of whole lines.
+    private fun bottoms(lines: Int, height: Float = 26f) = (1..lines).map { it * height }
+
+    @Test
+    fun lineGroupsFillEachPageWithWholeLines() {
+        // 30 lines of 26 px on a 300 px page with a 12 px gap above each run:
+        // each run has 288 px (11 lines), then the rest.
+        val groups = aboutLineGroups(bottoms(30), gap = 12f, room = 300f)
+        assertEquals(listOf(0..10, 11..21, 22..29), groups)
+        // Every line in exactly one run, in order.
+        assertEquals((0..29).toList(), groups.flatMap { it.toList() })
+    }
+
+    @Test
+    fun lineGroupsNeverLeaveARunTallerThanThePage() {
+        val b = bottoms(47, 34.5f)
+        val groups = aboutLineGroups(b, gap = 12f, room = 590f)
+        groups.forEachIndexed { i, g ->
+            val top = if (g.first == 0) 0f else b[g.first - 1]
+            assertTrue("run $i is ${b[g.last] - top} px", b[g.last] - top + 12f <= 590f)
+        }
+    }
+
+    @Test
+    fun aLineTallerThanThePageStillGetsARun() {
+        assertEquals(listOf(0..0, 1..1), aboutLineGroups(listOf(400f, 800f), gap = 12f, room = 300f))
+    }
+
+    @Test
+    fun aParagraphThatFitsIsOneRun() {
+        assertEquals(listOf(0..4), aboutLineGroups(bottoms(5), gap = 12f, room = 300f))
+    }
 }
