@@ -18,8 +18,8 @@ android {
         // that: Supernote's tablets run Android 11 (API 30), and it installs there too.
         minSdk = 30
         targetSdk = 31
-        versionCode = 41
-        versionName = "1.2.28"
+        versionCode = 42
+        versionName = "1.2.29"
 
         ndk {
             // The bundled engine is built for the Kompakt and nothing else.
