@@ -14,8 +14,8 @@ already ships with, with GNU Go bundled as the engine.
 
 | | |
 |---|---|
-| ![Setting up a game](screenshots/1-new-game.png) | ![A game in progress](screenshots/2-playing.png) |
-| ![A hint offered as a preview stone](screenshots/3-hint.png) | ![About: privacy, terms and licenses](screenshots/4-about.png) |
+| ![A game in progress](screenshots/1-playing.png) | ![A hint offered as a preview stone](screenshots/2-hint.png) |
+| ![Setting up a game](screenshots/3-new-game.png) | ![The game over, with the score](screenshots/4-result.png) |
 
 ## What it does
 
